@@ -5,13 +5,12 @@
 //  Created by Kosta Milovanovic on 9/4/25.
 //
 
-import Testing
+import XCTest
 @testable import ChatApp
 
-struct ChatAppTests {
+final class ChatAppTests: XCTestCase {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    func testExample() throws {
+        XCTAssertTrue(true)
     }
-
 }

@@ -10,52 +10,111 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @Query(sort: \Chat.createdAt, order: .reverse) private var chats: [Chat]
+    @State private var showingSettings = false
+    @State private var initialChat: Chat? = nil
+    @State private var showInitialChat = false
 
     var body: some View {
-        NavigationSplitView {
+        NavigationStack {
+            NavigationLink(isActive: $showInitialChat) {
+                if let chat = initialChat {
+                    ChatView(chat: chat)
+                } else {
+                    EmptyView()
+                }
+            } label: { EmptyView() }
+            .hidden()
             List {
-                ForEach(items) { item in
+                ForEach(chats) { chat in
                     NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                        ChatView(chat: chat)
                     } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(chat.title.isEmpty ? "New Chat" : chat.title)
+                                .font(.headline)
+                            if let last = chat.messages.sorted(by: { $0.createdAt < $1.createdAt }).last {
+                                Text("\(last.role.capitalized): \(last.content)")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            deleteChat(chat)
+                        } label: {
+                            Label("Delete Chat", systemImage: "trash")
+                        }
                     }
                 }
-                .onDelete(perform: deleteItems)
+                .onDelete(perform: deleteChats)
             }
+            .navigationTitle("Chats")
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Image(systemName: "gear")
+                    }
+                    .accessibilityLabel("Settings")
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        addChat()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel("New Chat")
+                }
+                ToolbarItem(placement: .automatic) {
                     EditButton()
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
             }
-        } detail: {
-            Text("Select an item")
+            .sheet(isPresented: $showingSettings) {
+                SettingsView(context: modelContext)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                    .interactiveDismissDisabled(false)
+            }
+            .onAppear { ensureInitialChatIfNeeded() }
         }
     }
 
-    private func addItem() {
+    private func addChat() {
         withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
+            let chat = Chat(title: "")
+            modelContext.insert(chat)
         }
     }
 
-    private func deleteItems(offsets: IndexSet) {
+    private func deleteChats(at offsets: IndexSet) {
         withAnimation {
             for index in offsets {
-                modelContext.delete(items[index])
+                modelContext.delete(chats[index])
             }
         }
+    }
+
+    private func deleteChat(_ chat: Chat) {
+        withAnimation {
+            modelContext.delete(chat)
+        }
+    }
+
+    private func ensureInitialChatIfNeeded() {
+        guard chats.isEmpty, initialChat == nil else { return }
+        let chat = Chat(title: "")
+        modelContext.insert(chat)
+        try? modelContext.save()
+        initialChat = chat
+        showInitialChat = true
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: [Chat.self, Message.self, AppSettings.self], inMemory: true)
 }

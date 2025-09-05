@@ -12,7 +12,9 @@ import SwiftData
 struct ChatAppApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Chat.self,
+            Message.self,
+            AppSettings.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

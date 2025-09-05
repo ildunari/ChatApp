@@ -1,0 +1,40 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
+
+# CocoaPods (not used unless added)
+Pods/
+
+# Carthage
+Carthage/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Logs & temp
+*.log
+BuildLogs/
+
+# iOS specific
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Editor
+.vscode/
+.idea/
+
