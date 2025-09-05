@@ -54,6 +54,16 @@ final class AppSettings: Identifiable {
     var googleEnabledModels: [String]
     var xaiEnabledModels: [String]
 
+    // Interface preferences
+    // theme: system | light | dark
+    var interfaceTheme: String
+    // font style: system | serif | rounded | mono
+    var interfaceFontStyle: String
+    // discrete text size index 0...4 (XS..XL)
+    var interfaceTextSizeIndex: Int
+    // chat bubble color palette id (one of predefined ids)
+    var chatBubbleColorID: String
+
     init(
         id: UUID = UUID(),
         defaultProvider: String = "openai",
@@ -64,7 +74,11 @@ final class AppSettings: Identifiable {
         openAIEnabledModels: [String] = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"],
         anthropicEnabledModels: [String] = ["claude-3-5-sonnet", "claude-3-opus", "claude-3-haiku"],
         googleEnabledModels: [String] = ["gemini-1.5-pro", "gemini-1.5-flash"],
-        xaiEnabledModels: [String] = ["grok-beta"]
+        xaiEnabledModels: [String] = ["grok-beta"],
+        interfaceTheme: String = "system",
+        interfaceFontStyle: String = "system",
+        interfaceTextSizeIndex: Int = 2,
+        chatBubbleColorID: String = "teal"
     ) {
         self.id = id
         self.defaultProvider = defaultProvider
@@ -76,5 +90,9 @@ final class AppSettings: Identifiable {
         self.anthropicEnabledModels = anthropicEnabledModels
         self.googleEnabledModels = googleEnabledModels
         self.xaiEnabledModels = xaiEnabledModels
+        self.interfaceTheme = interfaceTheme
+        self.interfaceFontStyle = interfaceFontStyle
+        self.interfaceTextSizeIndex = interfaceTextSizeIndex
+        self.chatBubbleColorID = chatBubbleColorID
     }
 }

@@ -37,6 +37,19 @@ struct SettingsView: View {
                         }
                     }
                 }
+                Section("Interface") {
+                    NavigationLink {
+                        InterfaceSettingsView(store: store)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "paintpalette.fill").foregroundStyle(.orange)
+                            VStack(alignment: .leading) {
+                                Text("Appearance")
+                                Text("Theme, font, text size, bubble colors").font(.footnote).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
                 Section("Defaults") {
                     Picker("Default Provider", selection: $store.defaultProvider) {
                         Text("OpenAI").tag("openai")
@@ -294,6 +307,137 @@ private struct DefaultChatSettingsView: View {
             }
         }
         .navigationTitle("Default Chat")
+    }
+}
+
+// MARK: - Interface Settings
+
+private struct InterfaceSettingsView: View {
+    @ObservedObject var store: SettingsStore
+    @State private var sizeIndex: Double = 2
+
+    private let sizeLabels = ["XS", "S", "M", "L", "XL"]
+
+    private var previewFont: Font {
+        switch store.interfaceFontStyle {
+        case "serif": return .system(.body, design: .serif)
+        case "rounded": return .system(.body, design: .rounded)
+        case "mono": return .system(.body, design: .monospaced)
+        default: return .system(.body, design: .default)
+        }
+    }
+
+    private func fontForIndex(_ idx: Int) -> Font {
+        let base: Font
+        switch store.interfaceFontStyle {
+        case "serif": base = .system(.body, design: .serif)
+        case "rounded": base = .system(.body, design: .rounded)
+        case "mono": base = .system(.body, design: .monospaced)
+        default: base = .system(.body, design: .default)
+        }
+        // Map to discrete sizes
+        switch idx {
+        case 0: return base.smallCaps().weight(.regular)
+        case 1: return base
+        case 2: return .system(size: 17, weight: .regular, design: baseDesign())
+        case 3: return .system(size: 20, weight: .regular, design: baseDesign())
+        default: return .system(size: 24, weight: .regular, design: baseDesign())
+        }
+    }
+
+    private func baseDesign() -> Font.Design {
+        switch store.interfaceFontStyle {
+        case "serif": return .serif
+        case "rounded": return .rounded
+        case "mono": return .monospaced
+        default: return .default
+        }
+    }
+
+    private let bubblePalettes: [(id: String, color: Color)] = [
+        ("teal", Color(red: 0.46, green: 0.72, blue: 0.71)),     // muted teal
+        ("blue", Color(red: 0.42, green: 0.58, blue: 0.69)),     // slate blue
+        ("sage", Color(red: 0.49, green: 0.68, blue: 0.56)),     // sage
+        ("rose", Color(red: 0.79, green: 0.56, blue: 0.65)),     // dusty rose
+        ("lavender", Color(red: 0.62, green: 0.56, blue: 0.77)), // lavender
+        ("mushroom", Color(red: 0.72, green: 0.70, blue: 0.65))  // warm gray
+    ]
+
+    var body: some View {
+        Form {
+            Section("Theme") {
+                Picker("Color Scheme", selection: $store.interfaceTheme) {
+                    Text("System").tag("system")
+                    Text("Light").tag("light")
+                    Text("Dark").tag("dark")
+                }
+                .pickerStyle(.segmented)
+                Text("Choose whether the app follows system appearance or forces light/dark.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Font") {
+                Picker("Typeface", selection: $store.interfaceFontStyle) {
+                    Text("System").tag("system")
+                    Text("Serif").tag("serif")
+                    Text("Rounded").tag("rounded")
+                    Text("Monospaced").tag("mono")
+                }
+                .pickerStyle(.inline)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack { Text("Text Size"); Spacer(); Text(sizeLabels[Int(store.interfaceTextSizeIndex)]) }
+                    Slider(value: Binding(get: { Double(store.interfaceTextSizeIndex) }, set: { store.interfaceTextSizeIndex = Int($0.rounded()) }), in: 0...4, step: 1)
+                    // Previews under the slider positions
+                    HStack(spacing: 12) {
+                        ForEach(0..<5) { i in
+                            VStack {
+                                Text("Aa")
+                                    .font(fontForIndex(i))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 6)
+                            }
+                            .frame(height: 44)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(i == store.interfaceTextSizeIndex ? Color.accentColor.opacity(0.15) : Color.secondary.opacity(0.12))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .stroke(i == store.interfaceTextSizeIndex ? Color.accentColor : Color.clear, lineWidth: 1)
+                            )
+                            .onTapGesture { store.interfaceTextSizeIndex = i }
+                        }
+                    }
+                }
+            }
+
+            Section("Chat Bubble Color") {
+                HStack(spacing: 12) {
+                    ForEach(bubblePalettes, id: \.id) { p in
+                        Button(action: { store.chatBubbleColorID = p.id }) {
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(p.color)
+                                .frame(width: 36, height: 36)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .stroke(store.chatBubbleColorID == p.id ? Color.accentColor : Color.clear, lineWidth: 2)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                Text("Six muted palettes designed to be easy on the eyes.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .navigationTitle("Appearance")
+        .onAppear {
+            sizeIndex = Double(store.interfaceTextSizeIndex)
+        }
     }
 }
 

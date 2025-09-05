@@ -22,6 +22,12 @@ final class SettingsStore: ObservableObject {
     @Published var googleEnabled: Set<String>
     @Published var xaiEnabled: Set<String>
 
+    // Interface preferences
+    @Published var interfaceTheme: String // system | light | dark
+    @Published var interfaceFontStyle: String // system | serif | rounded | mono
+    @Published var interfaceTextSizeIndex: Int // 0...4
+    @Published var chatBubbleColorID: String // palette id
+
     private let OPENAI_KEY_KEYCHAIN = "openai_api_key"
     private let ANTHROPIC_KEY_KEYCHAIN = "anthropic_api_key"
     private let GOOGLE_KEY_KEYCHAIN = "google_api_key"
@@ -59,6 +65,11 @@ final class SettingsStore: ObservableObject {
         self.anthropicEnabled = Set(settings.anthropicEnabledModels)
         self.googleEnabled = Set(settings.googleEnabledModels)
         self.xaiEnabled = Set(settings.xaiEnabledModels)
+
+        self.interfaceTheme = settings.interfaceTheme
+        self.interfaceFontStyle = settings.interfaceFontStyle
+        self.interfaceTextSizeIndex = settings.interfaceTextSizeIndex
+        self.chatBubbleColorID = settings.chatBubbleColorID
     }
 
     func save() {
@@ -71,6 +82,10 @@ final class SettingsStore: ObservableObject {
         settings.anthropicEnabledModels = Array(anthropicEnabled).sorted()
         settings.googleEnabledModels = Array(googleEnabled).sorted()
         settings.xaiEnabledModels = Array(xaiEnabled).sorted()
+        settings.interfaceTheme = interfaceTheme
+        settings.interfaceFontStyle = interfaceFontStyle
+        settings.interfaceTextSizeIndex = interfaceTextSizeIndex
+        settings.chatBubbleColorID = chatBubbleColorID
         try? context.save()
 
         saveKeychain(key: OPENAI_KEY_KEYCHAIN, value: openAIAPIKey)
