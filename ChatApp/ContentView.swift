@@ -17,14 +17,6 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            NavigationLink(isActive: $showInitialChat) {
-                if let chat = initialChat {
-                    ChatView(chat: chat)
-                } else {
-                    EmptyView()
-                }
-            } label: { EmptyView() }
-            .hidden()
             List {
                 ForEach(chats) { chat in
                     NavigationLink {
@@ -80,6 +72,13 @@ struct ContentView: View {
                     .interactiveDismissDisabled(false)
             }
             .onAppear { ensureInitialChatIfNeeded() }
+        }
+        .navigationDestination(isPresented: $showInitialChat) {
+            if let chat = initialChat {
+                ChatView(chat: chat)
+            } else {
+                EmptyView()
+            }
         }
     }
 

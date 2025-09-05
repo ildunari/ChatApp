@@ -165,8 +165,19 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
 
         var full = ""
         let (bytes, response) = try await client.session.bytes(for: request)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw URLError(.badServerResponse)
+        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            // Surface a helpful, user-facing error instead of NSURLError -1011
+            let message: String
+            switch http.statusCode {
+            case 400: message = "OpenAI: 400 Bad Request — check model name and payload."
+            case 401: message = "OpenAI: 401 Unauthorized — check API key in Settings."
+            case 403: message = "OpenAI: 403 Forbidden — key lacks access to this model."
+            case 404: message = "OpenAI: 404 Not Found — endpoint or resource not found."
+            case 429: message = "OpenAI: 429 Rate limited — slow down or try later."
+            case 500...599: message = "OpenAI: Server error (\(http.statusCode)). Try again."
+            default: message = "OpenAI: HTTP \(http.statusCode)."
+            }
+            throw NSError(domain: "OpenAI", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: message])
         }
 
         for try await line in bytes.lines {

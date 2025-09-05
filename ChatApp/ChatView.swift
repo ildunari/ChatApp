@@ -20,62 +20,14 @@ struct ChatView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 12) {
-                        ForEach(sortedMessages) { message in
-                            HStack(alignment: .top, spacing: 8) {
-                                Text(message.role == "user" ? "You" : "AI")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 32, alignment: .leading)
-                                Group {
-                                    if message.role == "assistant" {
-                                        AIResponseView(content: message.content)
-                                    } else {
-                                        Text(message.content)
-                                    }
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .padding(.horizontal)
-                        }
-                        if let partial = streamingText {
-                            HStack(alignment: .top, spacing: 8) {
-                                Text("AI")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 32, alignment: .leading)
-                                AIResponseView(content: partial)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .padding(.horizontal)
-                        } else if isSending {
-                            HStack {
-                                ProgressView()
-                                Text("Thinking…")
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.horizontal)
-                        }
-                    }
-                }
-                .padding(.bottom, contentBottomPadding)
-                .onChange(of: chat.messages.count) { _, _ in
-                    if let last = sortedMessages.last {
-                        withAnimation {
-                            proxy.scrollTo(last.id, anchor: .bottom)
-                        }
-                    }
-                }
-            }
-
+            MessageListView(messages: sortedMessages,
+                             streamingText: streamingText,
+                             isSending: isSending)
             if let error = errorMessage {
                 Text(error)
                     .foregroundStyle(.red)
                     .padding(.horizontal)
             }
-
         }
         .safeAreaInset(edge: .bottom, spacing: 12) { // pins bottom controls and prevents overlap
             VStack(spacing: 12) {
@@ -112,6 +64,72 @@ struct ChatView: View {
                 updateChatTitle(from: first.content)
             }
             showSuggestions = chat.messages.isEmpty
+        }
+    }
+
+    // Split out heavy view builder to speed up type checking
+    private struct MessageListView: View {
+        let messages: [Message]
+        let streamingText: String?
+        let isSending: Bool
+        var body: some View {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 12) {
+                        ForEach(messages) { message in
+                            MessageRow(message: message)
+                        }
+                        if let partial = streamingText {
+                            StreamingRow(partial: partial)
+                        } else if isSending {
+                            HStack { ProgressView(); Text("Thinking…").foregroundStyle(.secondary) }
+                                .padding(.horizontal)
+                        }
+                    }
+                }
+                .padding(.bottom, 72)
+                .onChange(of: messages.count) { _, _ in
+                    if let last = messages.last {
+                        withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                    }
+                }
+            }
+        }
+    }
+
+    private struct MessageRow: View {
+        let message: Message
+        var body: some View {
+            HStack(alignment: .top, spacing: 8) {
+                Text(message.role == "user" ? "You" : "AI")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 32, alignment: .leading)
+                Group {
+                    if message.role == "assistant" {
+                        AIResponseView(content: message.content)
+                    } else {
+                        Text(message.content)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    private struct StreamingRow: View {
+        let partial: String
+        var body: some View {
+            HStack(alignment: .top, spacing: 8) {
+                Text("AI")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 32, alignment: .leading)
+                AIResponseView(content: partial)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal)
         }
     }
 

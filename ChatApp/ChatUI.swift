@@ -45,6 +45,7 @@ struct InputBar: View {
     var onMic: (() -> Void)? = nil
     var onLive: (() -> Void)? = nil
     var onPlus: (() -> Void)? = nil
+    @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
         HStack(spacing: InputMetrics.rowSpacing) {
@@ -59,6 +60,15 @@ struct InputBar: View {
                 TextField("Ask anything", text: $text, axis: .vertical)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .lineLimit(1...6)
+                    .focused($isTextFieldFocused)
+                    .onSubmit {
+                        // This captures Return key on iOS (with shift+return for new line)
+                        if !text.isEmpty {
+                            onSend()
+                        }
+                    }
+                    .submitLabel(.send)
                 Button(action: { onMic?() }) {
                     Image(systemName: "mic")
                         .foregroundStyle(.secondary)
@@ -68,8 +78,15 @@ struct InputBar: View {
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(.blue)
                 }
+                // New send button with paper plane icon
+                Button(action: onSend) {
+                    Image(systemName: "paperplane.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.blue)
+                }
+                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            .frame(height: InputMetrics.fieldHeight)
+            .frame(minHeight: InputMetrics.fieldHeight, maxHeight: 120)
             .padding(.horizontal, 12)
             .background(
                 RoundedRectangle(cornerRadius: InputMetrics.fieldCorner, style: .continuous)
