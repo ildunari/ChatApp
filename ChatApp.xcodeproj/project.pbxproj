@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0A65CBED2E6B664D001DC08D /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 0A65CBEC2E6B664D001DC08D /* MarkdownUI */; };
+		0A65CBF02E6B6664001DC08D /* Highlighter in Frameworks */ = {isa = PBXBuildFile; productRef = 0A65CBEF2E6B6664001DC08D /* Highlighter */; };
+		0A65D0802E6B9E0F001DC08D /* SwiftMath in Frameworks */ = {isa = PBXBuildFile; productRef = 0A65D07F2E6B9E0F001DC08D /* SwiftMath */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		0A60D24B2E6A6DD100623E77 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -66,6 +72,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0A65CBF02E6B6664001DC08D /* Highlighter in Frameworks */,
+				0A65CBED2E6B664D001DC08D /* MarkdownUI in Frameworks */,
+				0A65D0802E6B9E0F001DC08D /* SwiftMath in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -115,6 +124,7 @@
 			buildConfigurationList = 0A60D25D2E6A6DD100623E77 /* Build configuration list for PBXNativeTarget "ChatApp" */;
 			buildPhases = (
 				0A60D2352E6A6DCF00623E77 /* Sources */,
+				0A65CBF52E6B90A5001DC08D /* Inject Dev .env */,
 				0A60D2362E6A6DCF00623E77 /* Frameworks */,
 				0A60D2372E6A6DCF00623E77 /* Resources */,
 			);
@@ -127,6 +137,9 @@
 			);
 			name = ChatApp;
 			packageProductDependencies = (
+				0A65CBEC2E6B664D001DC08D /* MarkdownUI */,
+				0A65CBEF2E6B6664001DC08D /* Highlighter */,
+				0A65D07F2E6B9E0F001DC08D /* SwiftMath */,
 			);
 			productName = ChatApp;
 			productReference = 0A60D2392E6A6DCF00623E77 /* ChatApp.app */;
@@ -210,6 +223,11 @@
 			);
 			mainGroup = 0A60D2302E6A6DCF00623E77;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				0A65CBEB2E6B664D001DC08D /* XCRemoteSwiftPackageReference "MarkdownUI" */,
+				0A65CBEE2E6B6664001DC08D /* XCRemoteSwiftPackageReference "HighlighterSwift" */,
+				0A65D07E2E6B9E0F001DC08D /* XCRemoteSwiftPackageReference "SwiftMath" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0A60D23A2E6A6DCF00623E77 /* Products */;
 			projectDirPath = "";
@@ -245,6 +263,29 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		0A65CBF52E6B90A5001DC08D /* Inject Dev .env */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Env/.env",
+			);
+			name = "Inject Dev .env";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/DevSecrets.env",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  if [ -f \"$SRCROOT/Env/.env\" ]; then\n    echo \"Copying .env to DevSecrets.env (Debug only)\"\n    cp \"$SRCROOT/Env/.env\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/DevSecrets.env\"\n  else\n    echo \"(No Env/.env found; skipping)\"\n  fi\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		0A60D2352E6A6DCF00623E77 /* Sources */ = {
@@ -308,6 +349,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = Kosta.ChatApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -340,6 +382,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = Kosta.ChatApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -583,6 +626,51 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0A65CBEB2E6B664D001DC08D /* XCRemoteSwiftPackageReference "MarkdownUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/MarkdownUI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.1;
+			};
+		};
+		0A65CBEE2E6B6664001DC08D /* XCRemoteSwiftPackageReference "HighlighterSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/smittytone/HighlighterSwift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.7;
+			};
+		};
+		0A65D07E2E6B9E0F001DC08D /* XCRemoteSwiftPackageReference "SwiftMath" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mgriebling/SwiftMath";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0A65CBEC2E6B664D001DC08D /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A65CBEB2E6B664D001DC08D /* XCRemoteSwiftPackageReference "MarkdownUI" */;
+			productName = MarkdownUI;
+		};
+		0A65CBEF2E6B6664001DC08D /* Highlighter */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A65CBEE2E6B6664001DC08D /* XCRemoteSwiftPackageReference "HighlighterSwift" */;
+			productName = Highlighter;
+		};
+		0A65D07F2E6B9E0F001DC08D /* SwiftMath */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A65D07E2E6B9E0F001DC08D /* XCRemoteSwiftPackageReference "SwiftMath" */;
+			productName = SwiftMath;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0A60D2312E6A6DCF00623E77 /* Project object */;
 }

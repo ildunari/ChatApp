@@ -38,3 +38,8 @@ BuildLogs/
 .vscode/
 .idea/
 
+
+# Local env secrets (do not commit)
+Env/.env
+Env/*.env
+!Env/.env.example

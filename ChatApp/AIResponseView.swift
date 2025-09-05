@@ -9,6 +9,9 @@ import MarkdownUI
 import Highlightr
 #endif
 
+#if canImport(SwiftMath)
+import SwiftMath
+#endif
 #if canImport(iosMath)
 import iosMath
 #endif
@@ -29,6 +32,9 @@ struct AIResponseView: View {
                 }
             }
         }
+        .padding(12) // subtle bubble look for assistant messages
+        .background(Color.secondary.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
@@ -122,7 +128,7 @@ private struct MarkdownSegment: View {
             } else {
                 // Prefer GitHub-like theme; horizontally scroll tables to avoid crushing
                 let md = Markdown(text)
-                    .markdownTheme(.gitHub)
+                    .markdownTheme(.chatGitHub)
                 if containsTable {
                     ScrollView(.horizontal, showsIndicators: true) {
                         md
@@ -165,11 +171,13 @@ private struct MathBlockSegment: View {
     let latex: String
     var body: some View {
         Group {
-            #if canImport(iosMath)
-            MathLabel(latex: latex)
+            #if canImport(SwiftMath) || canImport(iosMath)
+            SwiftOrIOSMathLabel(latex: latex)
                 .padding(.vertical, 4)
             #else
-            Text("$$(\(latex))$$")
+            // Web-based KaTeX fallback (auto-sizes; allows horizontal scroll)
+            MathWebView(latex: latex, displayMode: true)
+                .frame(minHeight: 28)
             #endif
         }
     }
@@ -221,12 +229,13 @@ private struct HighlightedCodeView: UIViewRepresentable {
 }
 #endif
 
-#if canImport(iosMath)
-private struct MathLabel: UIViewRepresentable {
+#if canImport(SwiftMath) || canImport(iosMath)
+private struct SwiftOrIOSMathLabel: UIViewRepresentable {
     let latex: String
     func makeUIView(context: Context) -> MTMathUILabel {
         let v = MTMathUILabel()
         v.labelMode = .text
+        v.textAlignment = .center
         v.latex = latex
         return v
     }
@@ -252,10 +261,11 @@ private struct InlineMathParagraph: View {
                 case .text(let t):
                     Text(t)
                 case .math(let ltx):
-                    #if canImport(iosMath)
-                    MathLabel(latex: ltx)
+                    #if canImport(SwiftMath) || canImport(iosMath)
+                    SwiftOrIOSMathLabel(latex: ltx)
                     #else
-                    Text("$\(ltx)$")
+                    MathWebView(latex: ltx, displayMode: false)
+                        .frame(minHeight: 22)
                     #endif
                 }
             }

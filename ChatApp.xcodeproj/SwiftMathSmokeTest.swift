@@ -7,6 +7,7 @@ import SwiftMath
 // If it is linked, constructing MTMathUILabel succeeds at compile-time.
 @inline(__always)
 func _swiftMathSmokeTest() {
+    // If either module is linked, constructing MTMathUILabel should succeed at link time.
     _ = MTMathUILabel()
 }
 #endif

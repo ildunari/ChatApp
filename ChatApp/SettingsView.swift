@@ -57,9 +57,21 @@ struct SettingsView: View {
                         Text("Google").tag("google")
                         Text("XAI").tag("xai")
                     }
-                    TextField("Default Model", text: $store.defaultModel)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+
+                    // Model picker based on enabled models for the selected provider
+                    Picker("Default Model", selection: $store.defaultModel) {
+                        ForEach(modelsForSelectedProvider(), id: \.self) { m in
+                            Text(m).tag(m)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .disabled(modelsForSelectedProvider().isEmpty)
+                    .onAppear { ensureValidDefaultModel() }
+                    .onChange(of: store.defaultProvider) { _, _ in ensureValidDefaultModel() }
+                    .onChange(of: store.openAIEnabled) { _, _ in if store.defaultProvider == "openai" { ensureValidDefaultModel() } }
+                    .onChange(of: store.anthropicEnabled) { _, _ in if store.defaultProvider == "anthropic" { ensureValidDefaultModel() } }
+                    .onChange(of: store.googleEnabled) { _, _ in if store.defaultProvider == "google" { ensureValidDefaultModel() } }
+                    .onChange(of: store.xaiEnabled) { _, _ in if store.defaultProvider == "xai" { ensureValidDefaultModel() } }
                 }
             }
             .navigationTitle("Settings")
@@ -67,6 +79,26 @@ struct SettingsView: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) { Button("Save") { store.save(); dismiss() } }
             }
+        }
+    }
+}
+
+// MARK: - SettingsView helpers
+private extension SettingsView {
+    func modelsForSelectedProvider() -> [String] {
+        switch store.defaultProvider {
+        case "openai": return Array(store.openAIEnabled).sorted()
+        case "anthropic": return Array(store.anthropicEnabled).sorted()
+        case "google": return Array(store.googleEnabled).sorted()
+        case "xai": return Array(store.xaiEnabled).sorted()
+        default: return []
+        }
+    }
+
+    func ensureValidDefaultModel() {
+        let models = modelsForSelectedProvider()
+        if models.contains(store.defaultModel) == false {
+            store.defaultModel = models.first ?? ""
         }
     }
 }
@@ -509,18 +541,26 @@ private struct FontOptionCard: View {
             ZStack(alignment: .topTrailing) {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(background)
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .center, spacing: 6) {
                     Text(label)
                         .font(titleFont)
                         .fontWeight(.semibold)
                         .foregroundStyle(.primary)
-                        .padding(.top, 14)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
                     Text(sample)
                         .font(bodyFont)
                         .foregroundStyle(.secondary)
-                    Spacer(minLength: 4)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                    Spacer(minLength: 0)
                 }
                 .padding(14)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 if selected {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(Color.accentColor)

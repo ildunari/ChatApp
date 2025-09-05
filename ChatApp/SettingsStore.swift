@@ -50,12 +50,37 @@ final class SettingsStore: ObservableObject {
             try? context.save()
         }
 
+        // Prepare API keys using locals first (avoid touching self before full init)
+        var openAIKeyLocal = (try? KeychainService.read(key: OPENAI_KEY_KEYCHAIN)) ?? ""
+        var anthropicKeyLocal = (try? KeychainService.read(key: ANTHROPIC_KEY_KEYCHAIN)) ?? ""
+        var googleKeyLocal = (try? KeychainService.read(key: GOOGLE_KEY_KEYCHAIN)) ?? ""
+        var xaiKeyLocal = (try? KeychainService.read(key: XAI_KEY_KEYCHAIN)) ?? ""
+
+        #if DEBUG
+        // Prime from DevSecrets.env (copied to bundle in Debug) if Keychain slots are empty
+        if openAIKeyLocal.isEmpty || anthropicKeyLocal.isEmpty || googleKeyLocal.isEmpty || xaiKeyLocal.isEmpty {
+            let env = EnvLoader.loadFromBundle()
+            func prime(_ key: String, _ storageKey: String, current: inout String) {
+                if current.isEmpty, let v = env[key], v.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
+                    current = v
+                    try? KeychainService.save(key: storageKey, value: v)
+                }
+            }
+            prime("OPENAI_API_KEY", OPENAI_KEY_KEYCHAIN, current: &openAIKeyLocal)
+            prime("ANTHROPIC_API_KEY", ANTHROPIC_KEY_KEYCHAIN, current: &anthropicKeyLocal)
+            prime("GOOGLE_API_KEY", GOOGLE_KEY_KEYCHAIN, current: &googleKeyLocal)
+            prime("XAI_API_KEY", XAI_KEY_KEYCHAIN, current: &xaiKeyLocal)
+        }
+        #endif
+
+        // Now assign all @Published stored properties
         self.defaultProvider = settings.defaultProvider
         self.defaultModel = settings.defaultModel
-        self.openAIAPIKey = (try? KeychainService.read(key: OPENAI_KEY_KEYCHAIN)) ?? ""
-        self.anthropicAPIKey = (try? KeychainService.read(key: ANTHROPIC_KEY_KEYCHAIN)) ?? ""
-        self.googleAPIKey = (try? KeychainService.read(key: GOOGLE_KEY_KEYCHAIN)) ?? ""
-        self.xaiAPIKey = (try? KeychainService.read(key: XAI_KEY_KEYCHAIN)) ?? ""
+
+        self.openAIAPIKey = openAIKeyLocal
+        self.anthropicAPIKey = anthropicKeyLocal
+        self.googleAPIKey = googleKeyLocal
+        self.xaiAPIKey = xaiKeyLocal
 
         self.systemPrompt = settings.defaultSystemPrompt
         self.temperature = settings.defaultTemperature

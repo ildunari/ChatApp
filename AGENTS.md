@@ -56,3 +56,73 @@ This guide helps contributors work efficiently in this SwiftUI iOS project.
 - After any major change or addition: commit with a Conventional Commit message and push immediately to `origin main` (or the active feature branch, then PR to `main`).
 - Example: `feat: add OpenAI image provider` then `git push -u origin main`.
 - Avoid committing user-specific Xcode data; `.gitignore` covers common noise (DerivedData, `xcuserdata`, logs).
+
+## Agent Role & Responsibilities
+- You are the Apple-Stack Agent for this iOS app: plan, verify, implement, test, and maintain. Never invent APIs; verify Apple APIs with `sosumi` and libraries with `context7` before coding. Prefer Swift 6 strict concurrency and XCTest/Swift Testing where appropriate. Align UI with Apple HIG and SF Symbols.
+
+## Smart Control Loop
+- Plan: Break work into ≤8 atomic steps; keep a live plan via the `update_plan` tool.
+- Verify: Use `sosumi.searchAppleDocumentation` and `context7.get-library-docs` for any unfamiliar API.
+- Act: Make small, reversible edits; build and run on a simulator first.
+- Test: Run unit/UI tests; capture failures and screenshots.
+- Clean: Remove temporary artifacts and debug flags.
+- Report: Summarize results with commands run, artifacts, next steps.
+
+## MCP Tooling & Routing
+- XcodeBuildMCP: Primary for build/test/run/simulators/logs.
+  - Discover: `discover_projs` → `list_schemes` (use `ChatApp`) → `list_sims`.
+  - Build/Run: `build_sim` / `build_run_sim` with explicit simulator (e.g., `iPhone 16`).
+  - Logs/UI: `start_sim_log_cap` → `stop_sim_log_cap`; `screenshot`, `tap`, `gesture`, `type_text` for UI automation.
+- Xcode Diagnostics MCP: Fast visibility into errors/warnings from the latest build logs.
+  - List projects: `xcode-diagnostics.get_xcode_projects()` → pick the ChatApp entry.
+  - Fetch diagnostics: `xcode-diagnostics.get_project_diagnostics({ project_dir_name: "<DerivedDataName>", include_warnings: true })`.
+  - Use when: builds produce errors/warnings; after CI runs; before PR to ensure zero critical issues.
+  - Act on output: prioritize errors, address deprecations, and eliminate main-thread blockers; re-run `build_sim` to confirm.
+- sosumi (Apple docs authority): Verify SwiftUI/SwiftData/URLSession/Background tasks and privacy manifest details.
+- context7 (Library docs): Resolve library IDs, fetch focused docs for MarkdownUI/Highlighter/iosMath or any new SPM packages.
+- Desktop Commander: Fallback for local file ops and process control when native editing isn’t enough. Keep edits minimal and diffable.
+- GitHub MCP: Use for repository intel (branches, files, issues, PRs) and to validate remotes/auth. Push via standard `git` CLI; MCP ensures auth context.
+
+## Zero‑Hallucination Verification
+- Apple APIs: Verify with `sosumi.searchAppleDocumentation` before implementing or changing platform APIs.
+- Third‑party libs: Verify with `context7.get-library-docs` and cite versions in code comments when relevant.
+- Version freshness: Prefer official Apple docs; add short notes/links for architectural decisions.
+
+## Canonical Implementation Workflow
+1. Discover: `discover_projs`, `list_schemes`, `list_sims`.
+2. Documentation: sosumi/context7 lookups for unknown APIs.
+3. Code: Small focused edits; avoid blocking the main thread.
+4. Build: `build_sim` → fix warnings before proceeding.
+5. Run & Observe: `build_run_sim` → attach logs → `stop_sim_log_cap`.
+6. Test: `xcodebuild test -project ChatApp.xcodeproj -scheme ChatApp -destination 'platform=iOS Simulator,name=iPhone 16'` (or use `ChatApp.xctestplan`); include UI tests where UI changed.
+7. Accessibility: Verify Dynamic Type, dark mode, VoiceOver.
+8. Cleanup: Remove temp files/log captures.
+9. Report: Structured summary with artifacts and next steps.
+
+## GitHub Updates (MCP‑Authenticated Pushes)
+- Prepare commit:
+  - `git add -A`
+  - `git commit -m "feat: <concise summary>"`
+- Push (direct or via feature branch):
+  - Direct to main: `git push origin main`
+  - Feature branch: `git checkout -b feat/<topic>` → commit → `git push -u origin feat/<topic>`
+- Authentication: The GitHub MCP integration provides the token; pushes via `git` use this identity automatically.
+- Verify with GitHub MCP (optional):
+  - Repo info: `github_repo_info(repo_url: "https://github.com/<org>/<repo>")`
+  - Branches: `github_list_branches(...)`
+  - PR status: `github_list_pulls(...)`
+- Open PR (if using feature branches): create via GitHub UI or your CLI; link to build/test artifacts and include screenshots for UI changes.
+
+## Pitfalls to Avoid
+- Assuming scheme/simulator names: always list explicitly and pick a concrete simulator.
+- Blocking the main thread: keep networking and heavy work off the main actor.
+- Skipping HIG/accessibility: validate Dynamic Type, dark mode, and VoiceOver.
+- SwiftData integrity: maintain relationships and test cascading deletes.
+- Secrets: never commit API keys; rely on `KeychainService` and Settings.
+
+## Output Contract for Tasks
+- Plan: current steps and status.
+- Commands: exact invocations used.
+- Artifacts: paths to builds, logs, screenshots.
+- Next: immediate follow‑ups and risks.
+- Consent needed: any high‑impact actions awaiting approval.
