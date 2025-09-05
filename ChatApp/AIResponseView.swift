@@ -107,15 +107,32 @@ private func parseBlocks(from text: String) -> [Block] {
 
 private struct MarkdownSegment: View {
     let text: String
+
+    // Lightweight detector for Markdown tables (header and pipes present)
+    private var containsTable: Bool {
+        text.contains("|") && text.contains("---")
+    }
+
     var body: some View {
         Group {
             #if canImport(MarkdownUI)
             if text.contains("$") {
+                // Use our inline math renderer when inline $...$ detected
                 InlineMathParagraph(text: text)
             } else {
-                Markdown(text)
+                // Prefer GitHub-like theme; horizontally scroll tables to avoid crushing
+                let md = Markdown(text)
+                    .markdownTheme(.gitHub)
+                if containsTable {
+                    ScrollView(.horizontal, showsIndicators: true) {
+                        md
+                    }
+                } else {
+                    md
+                }
             }
             #else
+            // Fallback: still render inline math tokens; plain Text otherwise
             InlineMathParagraph(text: text)
             #endif
         }
@@ -127,12 +144,14 @@ private struct CodeBlockSegment: View {
     let code: String
     var body: some View {
         Group {
-            #if canImport(Highlightr)
+            #if canImport(Highlightr) || canImport(HighlighterSwift)
             HighlightedCodeView(code: code, language: language)
+                .background(Color.secondary.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             #else
             ScrollView(.horizontal, showsIndicators: true) {
-                Text(code).font(.system(.body, design: .monospaced))
+                Text(code)
+                    .font(.system(.body, design: .monospaced))
                     .padding(12)
             }
             .background(Color.secondary.opacity(0.12))
@@ -177,6 +196,27 @@ private struct HighlightedCodeView: UIViewRepresentable {
         } else {
             uiView.text = code
         }
+    }
+}
+#elseif canImport(HighlighterSwift)
+import HighlighterSwift
+private struct HighlightedCodeView: UIViewRepresentable {
+    let code: String
+    let language: String?
+    func makeUIView(context: Context) -> UITextView {
+        let tv = UITextView()
+        tv.isEditable = false
+        tv.isScrollEnabled = false
+        tv.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
+        tv.backgroundColor = UIColor.clear
+        return tv
+    }
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        let highlighter = HighlighterSwift()
+        // Attempt a common theme; fall back gracefully
+        let highlighted = highlighter.highlight(code: code, as: language ?? "") ?? NSAttributedString(string: code)
+        uiView.attributedText = highlighted
+        uiView.textColor = UIColor.label
     }
 }
 #endif

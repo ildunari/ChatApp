@@ -317,6 +317,7 @@ private struct InterfaceSettingsView: View {
     @State private var sizeIndex: Double = 2
 
     private let sizeLabels = ["XS", "S", "M", "L", "XL"]
+    @Environment(\.colorScheme) private var colorScheme
 
     private var previewFont: Font {
         switch store.interfaceFontStyle {
@@ -378,13 +379,27 @@ private struct InterfaceSettingsView: View {
             }
 
             Section("Font") {
-                Picker("Typeface", selection: $store.interfaceFontStyle) {
-                    Text("System").tag("system")
-                    Text("Serif").tag("serif")
-                    Text("Rounded").tag("rounded")
-                    Text("Monospaced").tag("mono")
+                // Fancy two-column card grid for font choices
+                let options: [(id: String, label: String)] = [
+                    ("system", "System"), ("serif", "Serif"), ("rounded", "Rounded"), ("mono", "Monospaced")
+                ]
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                    ForEach(options, id: \.id) { opt in
+                        let titleF = cardTitleFont(for: opt.id)
+                        let bodyF = cardBodyFont(for: opt.id)
+                        let bg = cardBackground(for: opt.id)
+                        FontOptionCard(
+                            label: opt.label,
+                            titleFont: titleF,
+                            bodyFont: bodyF,
+                            background: bg,
+                            selected: store.interfaceFontStyle == opt.id,
+                            onSelect: { store.interfaceFontStyle = opt.id }
+                        )
+                        .accessibilityLabel("\(opt.label) font")
+                        .accessibilityAddTraits(store.interfaceFontStyle == opt.id ? .isSelected : [])
+                    }
                 }
-                .pickerStyle(.inline)
 
                 VStack(alignment: .leading, spacing: 8) {
                     HStack { Text("Text Size"); Spacer(); Text(sizeLabels[Int(store.interfaceTextSizeIndex)]) }
@@ -439,6 +454,89 @@ private struct InterfaceSettingsView: View {
             sizeIndex = Double(store.interfaceTextSizeIndex)
         }
     }
+
+    // MARK: - Helpers (Fonts & Backgrounds)
+    private func cardTitleFont(for id: String) -> Font {
+        switch id {
+        case "serif": return .system(size: 22, weight: .semibold, design: .serif)
+        case "rounded": return .system(size: 22, weight: .semibold, design: .rounded)
+        case "mono": return .system(size: 22, weight: .semibold, design: .monospaced)
+        default: return .system(size: 22, weight: .semibold, design: .default)
+        }
+    }
+
+    private func cardBodyFont(for id: String) -> Font {
+        switch id {
+        case "serif": return .system(size: 14, weight: .regular, design: .serif)
+        case "rounded": return .system(size: 14, weight: .regular, design: .rounded)
+        case "mono": return .system(size: 14, weight: .regular, design: .monospaced)
+        default: return .system(size: 14, weight: .regular, design: .default)
+        }
+    }
+
+    private func sampleSnippet(for id: String) -> String {
+        switch id {
+        case "serif": return "Readable, classic body text"
+        case "rounded": return "Friendly, soft headings"
+        case "mono": return "Code & technical content"
+        default: return "Balanced, native UI style"
+        }
+    }
+
+    private func cardBackground(for id: String) -> Color {
+        // Muted, per-font tones; adjusted for dark/light
+        let isDark = (colorScheme == .dark)
+        switch id {
+        case "serif": return isDark ? Color(red: 0.18, green: 0.17, blue: 0.15) : Color(red: 0.97, green: 0.96, blue: 0.93)
+        case "rounded": return isDark ? Color(red: 0.12, green: 0.16, blue: 0.20) : Color(red: 0.93, green: 0.96, blue: 0.98)
+        case "mono": return isDark ? Color(red: 0.16, green: 0.16, blue: 0.22) : Color(red: 0.94, green: 0.94, blue: 0.98)
+        default: return isDark ? Color.white.opacity(0.06) : Color.secondary.opacity(0.12)
+        }
+    }
+}
+
+// Split out to keep the parent body simple for the compiler
+private struct FontOptionCard: View {
+    let label: String
+    let titleFont: Font
+    let bodyFont: Font
+    let background: Color
+    let selected: Bool
+    let onSelect: () -> Void
+
+    var body: some View {
+        Button(action: onSelect) {
+            ZStack(alignment: .topTrailing) {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(background)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(label)
+                        .font(titleFont)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                        .padding(.top, 14)
+                    Text(sample)
+                        .font(bodyFont)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 4)
+                }
+                .padding(14)
+                if selected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(Color.accentColor)
+                        .padding(8)
+                }
+            }
+            .frame(height: 92)
+        }
+        .buttonStyle(.plain)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(selected ? Color.accentColor : Color.clear, lineWidth: 1)
+        )
+    }
+
+    private var sample: String { "Aa • Readable preview" }
 }
 
 #Preview {
