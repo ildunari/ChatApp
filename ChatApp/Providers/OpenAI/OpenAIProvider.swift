@@ -210,9 +210,8 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
                         case "response.completed":
                             break
                         case "error":
-                            let msg = env.error?.message ?? "Response error"
-                            // Surface as thrown error to caller
-                            // Throwing inside closure is not allowed; collect and handle after loop
+                            _ = env.error?.message // keep for potential logging
+                            // Throwing inside closure is not allowed; ignore here; caller will handle empty result or earlier HTTP errors
                             full += ""
                         default:
                             break
