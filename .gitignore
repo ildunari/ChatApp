@@ -84,6 +84,12 @@ webcanvas/.next/
 webcanvas/dist/
 webcanvas/.cache/
 
+# In-app WebCanvas should only keep built assets under dist/
+ChatApp/ChatApp/WebCanvas/package.json
+ChatApp/ChatApp/WebCanvas/package-lock.json
+ChatApp/ChatApp/WebCanvas/scripts/
+ChatApp/ChatApp/WebCanvas/src/
+
 # Testing
 xcov_report/
 fastlane/test_output/
