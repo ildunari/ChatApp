@@ -476,22 +476,22 @@ struct ChatView: View {
 }
 
 #Preview {
-    Group {
-        if let container = try? ModelContainer(
-            for: Chat.self, Message.self, AppSettings.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        ) {
-            let context = ModelContext(container)
-            let chat = Chat(title: "Preview Chat")
-            context.insert(chat)
-            context.insert(Message(role: "user", content: "Hello!", chat: chat))
+    if let container = try? ModelContainer(
+        for: Chat.self, Message.self, AppSettings.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    ) {
+        let context = ModelContext(container)
+        let chat = Chat(title: "Preview Chat")
+        context.insert(chat)
+        context.insert(Message(role: "user", content: "Hello!", chat: chat))
+        return AnyView(
             NavigationStack {
                 ChatView(chat: chat)
             }
             .modelContainer(container)
-        } else {
-            Text("Preview unavailable")
-        }
+        )
+    } else {
+        return AnyView(Text("Preview unavailable"))
     }
 }
 
