@@ -476,15 +476,23 @@ struct ChatView: View {
 }
 
 #Preview {
-    let container = try! ModelContainer(for: Chat.self, Message.self, AppSettings.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
-    let context = ModelContext(container)
-    let chat = Chat(title: "Preview Chat")
-    context.insert(chat)
-    context.insert(Message(role: "user", content: "Hello!", chat: chat))
-    return NavigationStack {
-        ChatView(chat: chat)
+    Group {
+        if let container = try? ModelContainer(
+            for: Chat.self, Message.self, AppSettings.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        ) {
+            let context = ModelContext(container)
+            let chat = Chat(title: "Preview Chat")
+            context.insert(chat)
+            context.insert(Message(role: "user", content: "Hello!", chat: chat))
+            NavigationStack {
+                ChatView(chat: chat)
+            }
+            .modelContainer(container)
+        } else {
+            Text("Preview unavailable")
+        }
     }
-    .modelContainer(container)
 }
 
 // MARK: - PhotosPicker helpers

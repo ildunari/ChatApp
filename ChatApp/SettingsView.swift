@@ -866,8 +866,13 @@ private struct FontOptionCard: View {
 }
 
 #Preview {
-    let container = try! ModelContainer(for: Chat.self, Message.self, AppSettings.self)
-    let context = ModelContext(container)
-    return SettingsView(context: context)
-        .modelContainer(container)
+    Group {
+        if let container = try? ModelContainer(for: Chat.self, Message.self, AppSettings.self) {
+            let context = ModelContext(container)
+            SettingsView(context: context)
+                .modelContainer(container)
+        } else {
+            Text("Preview unavailable")
+        }
+    }
 }

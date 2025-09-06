@@ -138,12 +138,12 @@
 				0A60D23B2E6A6DCF00623E77 /* ChatApp */,
 			);
 			name = ChatApp;
-				packageProductDependencies = (
-					0A65CBEC2E6B664D001DC08D /* MarkdownUI */,
-					0A65CBEF2E6B6664001DC08D /* Highlighter */,
-					0A65D07F2E6B9E0F001DC08D /* SwiftMath */,
-					D0PHSWIFT2 /* PhosphorSwift */,
-				);
+			packageProductDependencies = (
+				0A65CBEC2E6B664D001DC08D /* MarkdownUI */,
+				0A65CBEF2E6B6664001DC08D /* Highlighter */,
+				0A65D07F2E6B9E0F001DC08D /* SwiftMath */,
+				D0PHSWIFT2 /* PhosphorSwift */,
+			);
 			productName = ChatApp;
 			productReference = 0A60D2392E6A6DCF00623E77 /* ChatApp.app */;
 			productType = "com.apple.product-type.application";
@@ -230,7 +230,7 @@
 				0A65CBEB2E6B664D001DC08D /* XCRemoteSwiftPackageReference "MarkdownUI" */,
 				0A65CBEE2E6B6664001DC08D /* XCRemoteSwiftPackageReference "HighlighterSwift" */,
 				0A65D07E2E6B9E0F001DC08D /* XCRemoteSwiftPackageReference "SwiftMath" */,
-				D0PHSWIFT1 /* XCRemoteSwiftPackageReference "phosphor-icons/swift" */,
+				D0PHSWIFT1 /* XCRemoteSwiftPackageReference "swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0A60D23A2E6A6DCF00623E77 /* Products */;
@@ -342,7 +342,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ChatApp/Info.plist;
+				INFOPLIST_FILE = ChatApp/ChatApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -375,7 +375,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ChatApp/Info.plist;
+				INFOPLIST_FILE = ChatApp/ChatApp/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -656,7 +656,7 @@
 				minimumVersion = 1.7.3;
 			};
 		};
-		D0PHSWIFT1 /* XCRemoteSwiftPackageReference "phosphor-icons/swift" */ = {
+		D0PHSWIFT1 /* XCRemoteSwiftPackageReference "swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/phosphor-icons/swift";
 			requirement = {
@@ -684,7 +684,7 @@
 		};
 		D0PHSWIFT2 /* PhosphorSwift */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = D0PHSWIFT1 /* XCRemoteSwiftPackageReference "phosphor-icons/swift" */;
+			package = D0PHSWIFT1 /* XCRemoteSwiftPackageReference "swift" */;
 			productName = PhosphorSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
