@@ -10,6 +10,15 @@ struct ProviderModelInfo: Codable, Equatable {
     var maxTemperature: Double?
     var supportsPromptCaching: Bool?
 
+    // Preferred request-time defaults (user overrides live here; provider defaults may populate some)
+    var preferredTemperature: Double?
+    var preferredTopP: Double?
+    var preferredTopK: Int?
+    var preferredMaxOutputTokens: Int?
+    var preferredReasoningEffort: String?   // e.g., minimal|low|medium|high
+    var preferredVerbosity: String?         // e.g., low|medium|high
+    var disableSafetyFilters: Bool?         // Google safety off
+
     // Convenience defaults
     static func fallback(id: String) -> ProviderModelInfo {
         ProviderModelInfo(id: id,
@@ -17,7 +26,14 @@ struct ProviderModelInfo: Codable, Equatable {
                           inputTokenLimit: nil,
                           outputTokenLimit: nil,
                           maxTemperature: 2.0,
-                          supportsPromptCaching: false)
+                          supportsPromptCaching: false,
+                          preferredTemperature: nil,
+                          preferredTopP: nil,
+                          preferredTopK: nil,
+                          preferredMaxOutputTokens: nil,
+                          preferredReasoningEffort: nil,
+                          preferredVerbosity: nil,
+                          disableSafetyFilters: nil)
     }
 }
 

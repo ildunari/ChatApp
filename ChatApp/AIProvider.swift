@@ -34,6 +34,8 @@ protocol AIProviderAdvanced: AIProvider {
         messages: [AIMessage],
         model: String,
         temperature: Double?,
+        topP: Double?,
+        topK: Int?,
         maxOutputTokens: Int?,
         reasoningEffort: String?, // e.g. minimal|medium|high
         verbosity: String?        // e.g. low|medium|high
@@ -45,6 +47,8 @@ protocol AIStreamingProvider {
         messages: [AIMessage],
         model: String,
         temperature: Double?,
+        topP: Double?,
+        topK: Int?,
         maxOutputTokens: Int?,
         reasoningEffort: String?,
         verbosity: String?,

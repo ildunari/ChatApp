@@ -418,6 +418,14 @@ private struct ModelSettingsView: View {
     @State private var outputTokenLimit: String = ""
     @State private var maxTemperature: Double = 2.0
     @State private var supportsPromptCaching: Bool = false
+    // Advanced prefs
+    @State private var preferredTemperature: Double? = nil
+    @State private var preferredTopP: Double? = nil
+    @State private var preferredTopK: String = "" // text field
+    @State private var preferredMaxOutputTokens: String = ""
+    @State private var preferredReasoningEffort: String? = nil // none|low|medium|high
+    @State private var preferredVerbosity: String? = nil // none|low|medium|high
+    @State private var disableSafetyFilters: Bool = true
 
     // Originals for discard detection
     @State private var original: ProviderModelInfo = .fallback(id: "")
@@ -448,6 +456,34 @@ private struct ModelSettingsView: View {
                         Slider(value: $maxTemperature, in: 0...4, step: 0.05)
                     }
                     Toggle("Supports Prompt Caching", isOn: $supportsPromptCaching)
+                }
+
+                Section("Advanced Defaults (Applied on Send)") {
+                    VStack(alignment: .leading) {
+                        HStack { Text("Preferred Temperature"); Spacer(); Text(String(format: "%.2f", (preferredTemperature ?? maxTemperature))).foregroundStyle(.secondary) }
+                        Slider(value: Binding(get: { preferredTemperature ?? maxTemperature }, set: { preferredTemperature = $0 }), in: 0...maxTemperature, step: 0.05)
+                    }
+                    VStack(alignment: .leading) {
+                        HStack { Text("Top P"); Spacer(); Text(String(format: "%.2f", preferredTopP ?? 1.0)).foregroundStyle(.secondary) }
+                        Slider(value: Binding(get: { preferredTopP ?? 1.0 }, set: { preferredTopP = $0 }), in: 0...1, step: 0.01)
+                    }
+                    TextField("Top K", text: $preferredTopK)
+                        .keyboardType(.numberPad)
+                    TextField("Preferred Max Output Tokens", text: $preferredMaxOutputTokens)
+                        .keyboardType(.numberPad)
+                    Picker("Reasoning Effort", selection: Binding(get: { preferredReasoningEffort ?? "none" }, set: { preferredReasoningEffort = ($0 == "none" ? nil : $0) })) {
+                        Text("None").tag("none")
+                        Text("Low").tag("low")
+                        Text("Medium").tag("medium")
+                        Text("High").tag("high")
+                    }
+                    Picker("Verbosity", selection: Binding(get: { preferredVerbosity ?? "none" }, set: { preferredVerbosity = ($0 == "none" ? nil : $0) })) {
+                        Text("None").tag("none")
+                        Text("Low").tag("low")
+                        Text("Medium").tag("medium")
+                        Text("High").tag("high")
+                    }
+                    Toggle("Disable Google Safety Filters", isOn: $disableSafetyFilters)
                 }
 
                 if let defText = defaultSummary() {
@@ -484,6 +520,13 @@ private struct ModelSettingsView: View {
         outputTokenLimit = effective.outputTokenLimit.map { String($0) } ?? ""
         maxTemperature = effective.maxTemperature ?? 2.0
         supportsPromptCaching = effective.supportsPromptCaching ?? false
+        preferredTemperature = effective.preferredTemperature
+        preferredTopP = effective.preferredTopP
+        preferredTopK = effective.preferredTopK.map { String($0) } ?? ""
+        preferredMaxOutputTokens = effective.preferredMaxOutputTokens.map { String($0) } ?? ""
+        preferredReasoningEffort = effective.preferredReasoningEffort
+        preferredVerbosity = effective.preferredVerbosity
+        disableSafetyFilters = effective.disableSafetyFilters ?? true
     }
 
     private func currentInfo() -> ProviderModelInfo {
@@ -493,7 +536,14 @@ private struct ModelSettingsView: View {
             inputTokenLimit: Int(inputTokenLimit),
             outputTokenLimit: Int(outputTokenLimit),
             maxTemperature: maxTemperature,
-            supportsPromptCaching: supportsPromptCaching
+            supportsPromptCaching: supportsPromptCaching,
+            preferredTemperature: preferredTemperature,
+            preferredTopP: preferredTopP,
+            preferredTopK: Int(preferredTopK),
+            preferredMaxOutputTokens: Int(preferredMaxOutputTokens),
+            preferredReasoningEffort: preferredReasoningEffort,
+            preferredVerbosity: preferredVerbosity,
+            disableSafetyFilters: disableSafetyFilters
         )
     }
 
@@ -522,7 +572,9 @@ private struct ModelSettingsView: View {
         let output = d.outputTokenLimit.map(String.init) ?? "—"
         let temp = String(format: "%.2f", d.maxTemperature ?? 2.0)
         let caching = (d.supportsPromptCaching ?? false) ? "Yes" : "No"
-        return "Input: \(input) • Output: \(output) • Max Temp: \(temp) • Caching: \(caching)"
+        let tp = d.preferredTopP.map { String(format: "%.2f", $0) } ?? "—"
+        let tk = d.preferredTopK.map(String.init) ?? "—"
+        return "Input: \(input) • Output: \(output) • Max Temp: \(temp) • TopP: \(tp) • TopK: \(tk) • Caching: \(caching)"
     }
 }
 

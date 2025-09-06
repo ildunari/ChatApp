@@ -100,6 +100,9 @@ struct ProviderAPIs {
                     let inputTokenLimit: Int?
                     let outputTokenLimit: Int?
                     let temperature: Double?
+                    let topP: Double?
+                    let topK: Int?
+                    let thinking: Bool?
                 }
                 let models: [Item]?
             }
@@ -110,7 +113,14 @@ struct ProviderAPIs {
                                   inputTokenLimit: item.inputTokenLimit,
                                   outputTokenLimit: item.outputTokenLimit,
                                   maxTemperature: item.temperature ?? 2.0,
-                                  supportsPromptCaching: false)
+                                  supportsPromptCaching: item.thinking ?? false, // treat thinking support as caching-like flag
+                                  preferredTemperature: item.temperature,
+                                  preferredTopP: item.topP,
+                                  preferredTopK: item.topK,
+                                  preferredMaxOutputTokens: item.outputTokenLimit,
+                                  preferredReasoningEffort: nil,
+                                  preferredVerbosity: nil,
+                                  disableSafetyFilters: true)
             }
             // Update defaults layer immediately
             ModelCapabilitiesStore.putDefault(provider: provider.rawValue, infos: infos)

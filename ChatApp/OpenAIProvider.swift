@@ -28,7 +28,7 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
 
     // Backwards-compatible entry point delegates to Responses API implementation
     func sendChat(messages: [AIMessage], model: String) async throws -> String {
-        try await sendChat(messages: messages, model: model, temperature: nil, maxOutputTokens: nil, reasoningEffort: nil, verbosity: nil)
+        try await sendChat(messages: messages, model: model, temperature: nil, topP: nil, topK: nil, maxOutputTokens: nil, reasoningEffort: nil, verbosity: nil)
     }
 
     // Responses API with multimodal support
@@ -36,6 +36,8 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
         messages: [AIMessage],
         model: String,
         temperature: Double?,
+        topP: Double?,
+        topK: Int?,
         maxOutputTokens: Int?,
         reasoningEffort: String?,
         verbosity: String?
@@ -56,6 +58,7 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
             let model: String
             let input: [InputItem]
             let temperature: Double?
+            let top_p: Double?
             let max_output_tokens: Int?
             let reasoning: Reasoning?
             let verbosity: String?
@@ -84,6 +87,7 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
         let req = Req(model: model,
                       input: inputItems,
                       temperature: temperature,
+                      top_p: topP,
                       max_output_tokens: maxOutputTokens,
                       reasoning: reasoningEffort.map { .init(effort: $0) },
                       verbosity: verbosity)
@@ -110,6 +114,8 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
         messages: [AIMessage],
         model: String,
         temperature: Double?,
+        topP: Double?,
+        topK: Int?,
         maxOutputTokens: Int?,
         reasoningEffort: String?,
         verbosity: String?,
@@ -128,6 +134,7 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
             let model: String
             let input: [InputItem]
             let temperature: Double?
+            let top_p: Double?
             let max_output_tokens: Int?
             let reasoning: Reasoning?
             let verbosity: String?
@@ -151,6 +158,7 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
         let reqBody = Req(model: model,
                           input: inputItems,
                           temperature: temperature,
+                          top_p: topP,
                           max_output_tokens: maxOutputTokens,
                           reasoning: reasoningEffort.map { .init(effort: $0) },
                           verbosity: verbosity,

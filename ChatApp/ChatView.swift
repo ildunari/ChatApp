@@ -20,9 +20,18 @@ struct ChatView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            MessageListView(messages: sortedMessages,
-                             streamingText: streamingText,
-                             isSending: isSending)
+            if useWebCanvasFlag {
+                WebCanvasContainer(chat: chat,
+                                   messages: sortedMessages,
+                                   streamingText: streamingText,
+                                   isSending: isSending)
+            } else {
+                MessageListView(messages: sortedMessages,
+                                 streamingText: streamingText,
+                                 isSending: isSending,
+                                 aiDisplayName: providerDisplayName,
+                                 aiModel: currentModel)
+            }
             if let error = errorMessage {
                 Text(error)
                     .foregroundStyle(.red)
@@ -44,6 +53,7 @@ struct ChatView: View {
                     .ignoresSafeArea()
             )
         }
+        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
         .photosPicker(isPresented: $showPhotoPicker, selection: $pickerItems, maxSelectionCount: 4, matching: .images)
         .onChange(of: pickerItems) { _, newItems in
             Task {
@@ -67,17 +77,77 @@ struct ChatView: View {
         }
     }
 
+    // MARK: - WebCanvas integration
+    private var useWebCanvasFlag: Bool {
+        settingsQuery.first?.useWebCanvas ?? true
+    }
+
+    private var currentThemeForCanvas: CanvasTheme {
+        // Simple mapping: defer to system for now
+        if let pref = settingsQuery.first?.interfaceTheme, pref == "dark" { return .dark }
+        if let pref = settingsQuery.first?.interfaceTheme, pref == "light" { return .light }
+        // Fall back to light; SwiftUI color scheme not available here without @Environment
+        return .light
+    }
+
+    private struct WebCanvasContainer: View {
+        let chat: Chat
+        let messages: [Message]
+        let streamingText: String?
+        let isSending: Bool
+        @StateObject private var controller = ChatCanvasController()
+        @Environment(\.colorScheme) private var colorScheme
+        @State private var didStartStream = false
+        var body: some View {
+            ChatCanvasView(controller: controller, theme: (colorScheme == .dark ? .dark : .light))
+                .onAppear { loadAll() }
+                .onChange(of: messages.count) { _, _ in loadAll() }
+                .onChange(of: streamingText) { _, newVal in
+                    guard let partial = newVal else { return }
+                    // Start stream lazily only once
+                    if !didStartStream {
+                        controller.startStream(id: "current")
+                        didStartStream = true
+                    }
+                    controller.appendDelta(id: "current", delta: partial)
+                    controller.scrollToBottom()
+                }
+                .onChange(of: isSending) { _, sending in
+                    if sending == false {
+                        controller.endStream(id: "current")
+                        controller.scrollToBottom()
+                        didStartStream = false
+                    }
+                }
+        }
+        private func loadAll() {
+            let items: [CanvasMessage] = messages.map { m in
+                CanvasMessage(id: m.id.uuidString, role: m.role, content: m.content, createdAt: m.createdAt.timeIntervalSince1970)
+            }
+            controller.loadTranscript(items)
+            controller.scrollToBottom()
+        }
+    }
+
     // Split out heavy view builder to speed up type checking
     private struct MessageListView: View {
         let messages: [Message]
         let streamingText: String?
         let isSending: Bool
+        var aiDisplayName: String
+        var aiModel: String
         var body: some View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 12) {
                         ForEach(messages) { message in
-                            MessageRow(message: message)
+                            if message.role == "assistant" {
+                                MessageRow(message: message,
+                                           aiDisplayName: aiDisplayName,
+                                           aiModel: aiModel)
+                            } else {
+                                MessageRow(message: message)
+                            }
                         }
                         if let partial = streamingText {
                             StreamingRow(partial: partial)
@@ -99,33 +169,59 @@ struct ChatView: View {
 
     private struct MessageRow: View {
         let message: Message
+        // For assistant header
+        var aiDisplayName: String = "AI"
+        var aiModel: String = ""
         var body: some View {
-            HStack(alignment: .top, spacing: 8) {
-                Text(message.role == "user" ? "You" : "AI")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 32, alignment: .leading)
-                Group {
-                    if message.role == "assistant" {
+            Group {
+                if message.role == "assistant" {
+                    // Full-bleed AI response (no bubble), with header
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "sparkles")
+                                .foregroundStyle(.secondary)
+                            Text("\(aiDisplayName) \(aiModel)")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
                         AIResponseView(content: message.content)
-                    } else {
-                        Text(message.content)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .padding(.horizontal)
+                } else {
+                    // User message with a subtle bubble
+                    HStack(alignment: .top, spacing: 8) {
+                        Text("You")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(width: 32, alignment: .leading)
+                        Text(message.content)
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(Color(UIColor.secondarySystemBackground))
+                            )
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal)
         }
     }
 
     private struct StreamingRow: View {
         let partial: String
+        var aiDisplayName: String = "AI"
+        var aiModel: String = ""
         var body: some View {
-            HStack(alignment: .top, spacing: 8) {
-                Text("AI")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 32, alignment: .leading)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(.secondary)
+                    Text("\(aiDisplayName) \(aiModel)")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
                 AIResponseView(content: partial)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -251,16 +347,29 @@ struct ChatView: View {
             let imageParts = attachments.map { AIMessage.Part.imageData($0, mime: mime) }
             aiMessages.append(AIMessage(role: .user, parts: [.text(userText)] + imageParts))
 
+            // Apply per-model overrides from ModelCapabilitiesStore
+            let caps = ModelCapabilitiesStore.get(provider: providerID, model: model) // effective (user over default)
+            let tempEff = caps?.preferredTemperature ?? settings.defaultTemperature
+            let topPEff = caps?.preferredTopP
+            let topKEff = caps?.preferredTopK
+            let maxOutEff = min(settings.defaultMaxTokens, caps?.outputTokenLimit ?? settings.defaultMaxTokens)
+            let userMaxOut = caps?.preferredMaxOutputTokens
+            let finalMaxOut = userMaxOut.map { min($0, maxOutEff) } ?? maxOutEff
+            let reasoningEff = caps?.preferredReasoningEffort
+            let verbosityEff = caps?.preferredVerbosity
+
             let reply: String
             if let streaming = provider as? AIStreamingProvider {
                 streamingText = ""
                 reply = try await streaming.streamChat(
                     messages: aiMessages,
                     model: model,
-                    temperature: settings.defaultTemperature,
-                    maxOutputTokens: settings.defaultMaxTokens,
-                    reasoningEffort: nil,
-                    verbosity: nil
+                    temperature: tempEff,
+                    topP: topPEff,
+                    topK: topKEff,
+                    maxOutputTokens: finalMaxOut,
+                    reasoningEffort: reasoningEff,
+                    verbosity: verbosityEff
                 ) { delta in
                     Task { @MainActor in
                         self.streamingText = (self.streamingText ?? "") + delta
@@ -270,10 +379,12 @@ struct ChatView: View {
                 reply = try await adv.sendChat(
                     messages: aiMessages,
                     model: model,
-                    temperature: settings.defaultTemperature,
-                    maxOutputTokens: settings.defaultMaxTokens,
-                    reasoningEffort: nil,
-                    verbosity: nil
+                    temperature: tempEff,
+                    topP: topPEff,
+                    topK: topKEff,
+                    maxOutputTokens: finalMaxOut,
+                    reasoningEffort: reasoningEff,
+                    verbosity: verbosityEff
                 )
             } else {
                 reply = try await provider.sendChat(messages: aiMessages, model: model)
@@ -294,6 +405,15 @@ struct ChatView: View {
         } catch {
             errorMessage = (error as NSError).localizedDescription
         }
+    }
+
+    // MARK: - Provider header helpers
+    private var providerDisplayName: String {
+        let p = settingsQuery.first?.defaultProvider ?? "openai"
+        return ProviderID(rawValue: p)?.displayName ?? "AI"
+    }
+    private var currentModel: String {
+        settingsQuery.first?.defaultModel ?? ""
     }
 
     private func updateChatTitle(from text: String) {
