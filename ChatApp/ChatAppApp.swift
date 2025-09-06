@@ -38,7 +38,13 @@ struct ChatAppApp: App {
             do {
                 return try makeContainer()
             } catch {
-                fatalError("Could not create ModelContainer after recovery: \(error)")
+                // Final fallback: non‑crashing in‑memory container to keep the app usable
+                let memoryConfig = ModelConfiguration(isStoredInMemoryOnly: true)
+                if let fallback = try? ModelContainer(for: schema, configurations: [memoryConfig]) {
+                    return fallback
+                }
+                // If even in‑memory fails, crash with context
+                fatalError("Could not create ModelContainer (persistent or in‑memory): \(error)")
             }
         }
     }()

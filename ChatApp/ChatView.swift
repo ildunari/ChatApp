@@ -40,14 +40,16 @@ struct ChatView: View {
                     .padding(.horizontal)
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 12) { // pins bottom controls and prevents overlap
-            VStack(spacing: 12) {
+        .safeAreaInset(edge: .bottom, spacing: 0) { // pins bottom controls and prevents overlap
+            VStack(spacing: 0) {
                 if showSuggestions {
                     SuggestionChips(suggestions: defaultSuggestions)
+                        .padding(.bottom, 16) // Add padding between suggestions and input bar
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 InputBar(text: $inputText, onSend: { Task { await send() } }, onMic: nil, onLive: nil, onPlus: { showPhotoPicker = true })
                     .disabled(isSending)
+                    .padding(.top, 6) // Reduced padding above input bar
             }
             .background(
                 VStack(spacing: 0) {

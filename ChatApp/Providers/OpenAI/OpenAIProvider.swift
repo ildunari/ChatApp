@@ -172,6 +172,7 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
         request.httpBody = try JSONEncoder().encode(reqBody)
 
         var full = ""
+        var streamedError: String? = nil
         let (bytes, response) = try await client.session.bytes(for: request)
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             // Surface a helpful, user-facing error instead of NSURLError -1011
@@ -210,15 +211,16 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
                         case "response.completed":
                             break
                         case "error":
-                            _ = env.error?.message // keep for potential logging
-                            // Throwing inside closure is not allowed; ignore here; caller will handle empty result or earlier HTTP errors
-                            full += ""
+                            streamedError = env.error?.message ?? "Response error"
                         default:
                             break
                         }
                     }
                 }
             }
+        }
+        if let err = streamedError, !err.isEmpty {
+            throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: err])
         }
         return full
     }

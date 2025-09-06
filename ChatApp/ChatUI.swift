@@ -28,9 +28,9 @@ struct SuggestionChips: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 4)
+            .padding(.vertical, 8) // Increased vertical padding for better spacing
         }
-        .frame(height: 60)
+        .padding(.top, 8) // Add top padding to separate from chat content
         // Important: chips sit on canvas background, not input bar
         .background(T.bg)
     }
