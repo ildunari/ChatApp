@@ -430,6 +430,24 @@ struct ChatView: View {
                 throw NSError(domain: "Settings", code: -1, userInfo: [NSLocalizedDescriptionKey: "OpenAI API key not set. Open Settings to add your key."])
             }
             return OpenAIProvider(apiKey: key)
+        case "anthropic":
+            let key = (try? KeychainService.read(key: "anthropic_api_key")) ?? ""
+            guard !key.isEmpty else {
+                throw NSError(domain: "Settings", code: -1, userInfo: [NSLocalizedDescriptionKey: "Anthropic API key not set. Open Settings to add your key."])
+            }
+            return AnthropicProvider(apiKey: key)
+        case "google":
+            let key = (try? KeychainService.read(key: "google_api_key")) ?? ""
+            guard !key.isEmpty else {
+                throw NSError(domain: "Settings", code: -1, userInfo: [NSLocalizedDescriptionKey: "Google API key not set. Open Settings to add your key."])
+            }
+            return GoogleProvider(apiKey: key)
+        case "xai":
+            let key = (try? KeychainService.read(key: "xai_api_key")) ?? ""
+            guard !key.isEmpty else {
+                throw NSError(domain: "Settings", code: -1, userInfo: [NSLocalizedDescriptionKey: "XAI API key not set. Open Settings to add your key."])
+            }
+            return XAIProvider(apiKey: key)
         default:
             throw NSError(domain: "Provider", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unsupported provider: \(id)"])
         }
