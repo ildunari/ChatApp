@@ -113,6 +113,28 @@ This guide helps contributors work efficiently in this SwiftUI iOS project.
   - PR status: `github_list_pulls(...)`
 - Open PR (if using feature branches): create via GitHub UI or your CLI; link to build/test artifacts and include screenshots for UI changes.
 
+## Simulator Refresh (After Significant Changes)
+- Reuse existing simulator. Do not create new devices unless user asks.
+- Flow (assumes an already booted device from `list_sims`):
+  1) Build: `xcodebuildmcp.build_sim({ projectPath: "<proj>", scheme: "ChatApp", simulatorId: "<BOOTED_UUID>" })`
+  2) Path: `get_sim_app_path({ projectPath: "<proj>", scheme: "ChatApp", platform: 'iOS Simulator', simulatorId: '<BOOTED_UUID>' })`
+  3) Install: `install_app_sim({ simulatorUuid: '<BOOTED_UUID>', appPath: '<from step 2>' })`
+  4) Launch: `launch_app_sim({ simulatorUuid: '<BOOTED_UUID>', bundleId: 'Kosta.ChatApp' })`
+  5) Optional logs: `start_sim_log_cap({ simulatorUuid: '<BOOTED_UUID>', bundleId: 'Kosta.ChatApp', captureConsole: true })` → `stop_sim_log_cap(...)` and attach head/tail.
+- Handle pitfalls proactively:
+  - If “Requires newer iOS”: pick the booted runtime or rebuild for that runtime version; don’t spin up a new device.
+  - If “Launching…” hangs: delete the app on the same device, restart that simulator, then reinstall/launch.
+  - Never create duplicate sims; prefer the single booted device.
+
+## Proactive Agent Mode (Default)
+- After any meaningful edit:
+  - Build → run quick tests (`xcodebuild test` or `test_sim`), fix small issues now.
+  - Refresh the simulator app if UI or runtime behavior changed (see section above).
+  - Capture 1–2 screenshots and 10/10 log lines for the report.
+  - Commit with Conventional Commit and push to `main` (or feature branch) automatically unless user disabled auto‑push for the task.
+- Offer “next step” options unprompted, e.g., “Run full UI tests?”, “Bundle KaTeX assets?”, “Add reset data toggle?”, and be ready to execute.
+- Clean up artifacts: remove temporary files, revert debug flags, and ensure `.gitignore` noise isn’t added.
+
 ## Pitfalls to Avoid
 - Assuming scheme/simulator names: always list explicitly and pick a concrete simulator.
 - Blocking the main thread: keep networking and heavy work off the main actor.
