@@ -35,9 +35,9 @@ private enum InputMetrics { // precise sizing
     static let edgePadding: CGFloat = 16
     static let rowSpacing: CGFloat = 10
     static let plusSize: CGFloat = 40
-    static let fieldHeight: CGFloat = 44
+    static let fieldHeight: CGFloat = 40
     static let fieldCorner: CGFloat = 18
-    static let sendSize: CGFloat = 32
+    static let sendSize: CGFloat = 40 // match plusSize for visual consistency
 }
 
 struct InputBar: View {
@@ -47,6 +47,7 @@ struct InputBar: View {
     var onLive: (() -> Void)? = nil
     var onPlus: (() -> Void)? = nil
     @FocusState private var isTextFieldFocused: Bool
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(spacing: InputMetrics.rowSpacing) {
@@ -71,21 +72,26 @@ struct InputBar: View {
 
                 // Trailing controls (mutually exclusive)
                 if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    // Voice controls when input is empty
+                    // Voice controls when input is empty (match '+' button style)
                     Button(action: { onMic?() }) {
                         Image(systemName: "mic")
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundStyle(.secondary)
+                            .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
+                            .background(Circle().fill(Color.secondary.opacity(0.15)))
                     }
                     Button(action: { onLive?() }) {
-                        Image(systemName: "waveform.circle.fill")
+                        Image(systemName: "waveform")
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundStyle(.blue)
-                            .font(.system(size: 20, weight: .semibold))
+                            .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
+                            .background(Circle().fill(Color.secondary.opacity(0.15)))
                     }
                 } else {
                     // Send button only when there is text, styled like a small circle
                     Button(action: onSend) {
                         Image(systemName: "paperplane.fill")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundStyle(.blue)
                             .frame(width: InputMetrics.sendSize, height: InputMetrics.sendSize)
                             .background(Circle().fill(Color.secondary.opacity(0.15)))
@@ -93,12 +99,12 @@ struct InputBar: View {
                     .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
-            .frame(minHeight: InputMetrics.fieldHeight, maxHeight: 120)
+            .frame(minHeight: InputMetrics.fieldHeight) // compact baseline size
             .padding(.horizontal, 12)
-            .padding(.vertical, 6)
+            .padding(.vertical, 6) // slight vertical padding so text never looks cut off
             .background(
                 RoundedRectangle(cornerRadius: InputMetrics.fieldCorner, style: .continuous)
-                    .fill(Color.secondary.opacity(0.15))
+                    .fill(Color(UIColor.secondarySystemBackground))
             )
         }
         .padding(.horizontal, InputMetrics.edgePadding)
