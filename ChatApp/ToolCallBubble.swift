@@ -22,9 +22,7 @@ struct ToolCallBubble: View {
                         if let subtitle { Text(subtitle).font(.footnote).foregroundStyle(T.textSecondary) }
                     }
                     Spacer(minLength: 12)
-                    Image(systemName: expanded ? "chevron.up" : "chevron.down")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(T.textSecondary)
+                    Group { expanded ? AnyView(AppIcon.chevronUp(12).foregroundStyle(T.textSecondary)) : AnyView(AppIcon.chevronDown(12).foregroundStyle(T.textSecondary)) }
                 }
                 .padding(.horizontal, 14).padding(.vertical, 12)
                 .background(
@@ -83,8 +81,8 @@ struct ToolCallBubble: View {
                         // best-effort; authors can supply explicit strings by wrapping Text
                         UIPasteboard.general.string = nil
                     } label: {
-                        Image(systemName: "doc.on.doc").font(.footnote)
-                    }.buttonStyle(.plain).tint(T.textSecondary)
+                        AppIcon.copy(14).foregroundStyle(T.textSecondary)
+                    }.buttonStyle(.plain)
                 }
                 .padding(.horizontal, 12).padding(.top, 10)
                 ScrollView {
@@ -99,4 +97,3 @@ struct ToolCallBubble: View {
         }
     }
 }
-

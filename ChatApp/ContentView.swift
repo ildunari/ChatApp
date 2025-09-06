@@ -49,19 +49,11 @@ struct ContentView: View {
             .navigationTitle("Chats")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gear")
-                    }
+                    Button { showingSettings = true } label: { AppIcon.gear() }
                     .accessibilityLabel("Settings")
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        addChat()
-                    } label: {
-                        Image(systemName: "plus")
-                    }
+                    Button { addChat() } label: { AppIcon.plus() }
                     .accessibilityLabel("New Chat")
                 }
                 ToolbarItem(placement: .automatic) {
@@ -84,6 +76,8 @@ struct ContentView: View {
             }
         }
         .theme(tokens)
+        .fontDesign(fontDesignFromSettings())
+        .dynamicTypeSize(dynamicTypeFromSettings())
         .background(tokens.bg.ignoresSafeArea())
     }
 
@@ -124,13 +118,34 @@ private extension ContentView {
         let style: AppThemeStyle = {
             switch paletteID.lowercased() {
             case "slate", "coolslate": return .coolSlate
-            case "forest", "sage", "green": return .forest
+            case "sand", "sun", "sunset": return .sand
             case "lavender", "purple": return .lavender
             case "contrast", "highcontrast", "hc": return .highContrast
             default: return .terracotta
             }
         }()
         return ThemeFactory.make(style: style, colorScheme: colorScheme)
+    }
+
+    func fontDesignFromSettings() -> Font.Design {
+        let v = settingsQuery.first?.interfaceFontStyle ?? "system"
+        switch v {
+        case "serif": return .serif
+        case "rounded": return .rounded
+        case "mono": return .monospaced
+        default: return .default
+        }
+    }
+
+    func dynamicTypeFromSettings() -> DynamicTypeSize {
+        let idx = settingsQuery.first?.interfaceTextSizeIndex ?? 2
+        switch idx {
+        case 0: return .xSmall
+        case 1: return .small
+        case 2: return .medium
+        case 3: return .large
+        default: return .xLarge
+        }
     }
 }
 

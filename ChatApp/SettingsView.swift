@@ -18,7 +18,11 @@ struct SettingsView: View {
                         ProvidersSettingsView(store: store)
                     } label: {
                         HStack(spacing: 12) {
+                            #if canImport(PhosphorSwift)
+                            Ph.bolt.bold.frame(width: 18, height: 18).foregroundStyle(.blue)
+                            #else
                             Image(systemName: "bolt.horizontal.circle.fill").foregroundStyle(.blue)
+                            #endif
                             VStack(alignment: .leading) {
                                 Text("Providers")
                                 Text("Manage API keys and models").font(.footnote).foregroundStyle(.secondary)
@@ -29,7 +33,11 @@ struct SettingsView: View {
                         DefaultChatSettingsView(store: store)
                     } label: {
                         HStack(spacing: 12) {
+                            #if canImport(PhosphorSwift)
+                            Ph.sliders.bold.frame(width: 18, height: 18).foregroundStyle(.purple)
+                            #else
                             Image(systemName: "slider.horizontal.3").foregroundStyle(.purple)
+                            #endif
                             VStack(alignment: .leading) {
                                 Text("Default Chat")
                                 Text("System prompt, temperature, tokens").font(.footnote).foregroundStyle(.secondary)
@@ -42,7 +50,11 @@ struct SettingsView: View {
                         InterfaceSettingsView(store: store)
                     } label: {
                         HStack(spacing: 12) {
+                            #if canImport(PhosphorSwift)
+                            Ph.palette.bold.frame(width: 18, height: 18).foregroundStyle(.orange)
+                            #else
                             Image(systemName: "paintpalette.fill").foregroundStyle(.orange)
+                            #endif
                             VStack(alignment: .leading) {
                                 Text("Appearance")
                                 Text("Theme, font, text size, bubble colors").font(.footnote).foregroundStyle(.secondary)
@@ -139,7 +151,19 @@ private struct ProviderRow<Destination: View>: View {
     var body: some View {
         NavigationLink { destination() } label: {
             HStack(spacing: 12) {
+                #if canImport(PhosphorSwift)
+                // Minimal mapping for a few expected SF symbols used in previews
+                Group {
+                    switch symbol {
+                    case "gear": Ph.gear.bold
+                    case "plus": Ph.plus.bold
+                    case "info.circle": Ph.info.bold
+                    default: Ph.info.bold
+                    }
+                }.frame(width: 16, height: 16)
+                #else
                 Image(systemName: symbol)
+                #endif
                     .foregroundStyle(.teal)
                 Text(title)
             }
@@ -331,7 +355,11 @@ private struct ModelRowWithInfo: View {
         HStack {
             Button(action: { isOn.toggle() }) {
                 HStack {
+                    #if canImport(PhosphorSwift)
+                    (isOn ? Ph.check_circle : Ph.circle).bold.frame(width: 18, height: 18)
+                    #else
                     Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                    #endif
                         .foregroundStyle(isOn ? .blue : .secondary)
                     Text(title)
                         .foregroundStyle(.primary)
@@ -340,7 +368,11 @@ private struct ModelRowWithInfo: View {
             }
             .buttonStyle(.plain)
             Button(action: onInfo) {
+                #if canImport(PhosphorSwift)
+                Ph.info.bold.frame(width: 16, height: 16)
+                #else
                 Image(systemName: "info.circle")
+                #endif
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Model Info")
@@ -517,7 +549,7 @@ struct ModelSettingsView: View {
             .navigationTitle("Model Settings")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button { attemptDismiss() } label: { Image(systemName: "xmark") }
+                    Button { attemptDismiss() } label: { AppIcon.close(16) }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { saveAndDismiss() }
@@ -657,14 +689,9 @@ private struct InterfaceSettingsView: View {
         }
     }
 
-    private let bubblePalettes: [(id: String, color: Color)] = [
-        ("teal", Color(red: 0.46, green: 0.72, blue: 0.71)),     // muted teal
-        ("blue", Color(red: 0.42, green: 0.58, blue: 0.69)),     // slate blue
-        ("sage", Color(red: 0.49, green: 0.68, blue: 0.56)),     // sage
-        ("rose", Color(red: 0.79, green: 0.56, blue: 0.65)),     // dusty rose
-        ("lavender", Color(red: 0.62, green: 0.56, blue: 0.77)), // lavender
-        ("mushroom", Color(red: 0.72, green: 0.70, blue: 0.65))  // warm gray
-    ]
+    // Reduced, distinct palettes with dark-mode variants via ThemeFactory
+    private let bubblePaletteIDs: [String] = ["terracotta", "sand", "coolslate", "lavender", "highcontrast"]
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Form {
@@ -731,22 +758,22 @@ private struct InterfaceSettingsView: View {
                 }
             }
 
-            Section("Chat Bubble Color") {
+            Section("Theme Palette") {
                 HStack(spacing: 12) {
-                    ForEach(bubblePalettes, id: \.id) { p in
-                        Button(action: { store.chatBubbleColorID = p.id }) {
+                    ForEach(bubblePaletteIDs, id: \.self) { id in
+                        Button(action: { store.chatBubbleColorID = id }) {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(p.color)
+                                .fill(previewColor(for: id))
                                 .frame(width: 36, height: 36)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .stroke(store.chatBubbleColorID == p.id ? Color.accentColor : Color.clear, lineWidth: 2)
+                                        .stroke(store.chatBubbleColorID == id ? Color.accentColor : Color.clear, lineWidth: 2)
                                 )
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                Text("Six muted palettes designed to be easy on the eyes.")
+                Text("Soft, distinct palettes (with dark-mode variants). ‘Sand’ matches a Claude-like pastel.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -795,6 +822,19 @@ private struct InterfaceSettingsView: View {
         default: return isDark ? Color.white.opacity(0.06) : Color.secondary.opacity(0.12)
         }
     }
+
+    private func previewColor(for paletteID: String) -> Color {
+        let style: AppThemeStyle = {
+            switch paletteID.lowercased() {
+            case "coolslate", "slate": return .coolSlate
+            case "sand": return .sand
+            case "lavender": return .lavender
+            case "highcontrast": return .highContrast
+            default: return .terracotta
+            }
+        }()
+        return ThemeFactory.make(style: style, colorScheme: colorScheme).accent
+    }
 }
 
 // Split out to keep the parent body simple for the compiler
@@ -832,7 +872,11 @@ private struct FontOptionCard: View {
                 .padding(14)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 if selected {
+                    #if canImport(PhosphorSwift)
+                    Ph.check_circle.bold.frame(width: 18, height: 18)
+                    #else
                     Image(systemName: "checkmark.circle.fill")
+                    #endif
                         .foregroundStyle(Color.accentColor)
                         .padding(8)
                 }

@@ -187,7 +187,7 @@ struct ChatView: View {
                     // Full-bleed AI response (no bubble), with header
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 6) {
-                            Image(systemName: "sparkles")
+                            AppIcon.starsHeader(14)
                                 .foregroundStyle(T.textSecondary)
                             Text("\(aiDisplayName) \(aiModel)")
                                 .font(.footnote)
@@ -229,11 +229,11 @@ struct ChatView: View {
         var body: some View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .foregroundStyle(.secondary)
+                    AppIcon.starsHeader(14)
+                        .foregroundStyle(T.textSecondary)
                     Text("\(aiDisplayName) \(aiModel)")
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(T.textSecondary)
                 }
                 AIResponseView(content: partial)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -252,7 +252,13 @@ struct ChatView: View {
                     Button(action: { setDefaultModel(m) }) {
                         HStack {
                             Text(m)
-                            if m == (settingsQuery.first?.defaultModel ?? "") { Image(systemName: "checkmark") }
+                            if m == (settingsQuery.first?.defaultModel ?? "") {
+                                #if canImport(PhosphorSwift)
+                                Ph.check.bold.frame(width: 14, height: 14)
+                                #else
+                                Image(systemName: "checkmark")
+                                #endif
+                            }
                         }
                     }
                 }
@@ -260,18 +266,35 @@ struct ChatView: View {
                 Button {
                     showModelEditor = true
                 } label: {
-                    Label("Model Info", systemImage: "info.circle")
+                    HStack(spacing: 6) {
+                        #if canImport(PhosphorSwift)
+                        Ph.info.bold.frame(width: 14, height: 14)
+                        #else
+                        Image(systemName: "info.circle")
+                        #endif
+                        Text("Model Info")
+                    }
                 }
             } label: {
                 HStack(spacing: 4) {
                     Text(currentModelDisplay()).font(.headline)
+                    #if canImport(PhosphorSwift)
+                    Ph.caret_right.bold.frame(width: 10, height: 10)
+                    #else
                     Image(systemName: "chevron.right").font(.caption)
+                    #endif
                 }
                 .contentShape(Rectangle())
             }
         }
         ToolbarItem(placement: .navigationBarTrailing) {
-            Button { } label: { Image(systemName: "viewfinder.circle") }
+            Button { } label: {
+                #if canImport(PhosphorSwift)
+                Ph.target.bold.frame(width: 18, height: 18)
+                #else
+                Image(systemName: "viewfinder.circle")
+                #endif
+            }
         }
     }
 

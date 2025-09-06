@@ -82,7 +82,7 @@ final class AppSettings: Identifiable {
         interfaceTheme: String = "system",
         interfaceFontStyle: String = "system",
         interfaceTextSizeIndex: Int = 2,
-        chatBubbleColorID: String = "teal",
+        chatBubbleColorID: String = "terracotta",
         promptCachingEnabled: Bool = false,
         useWebCanvas: Bool = true
     ) {

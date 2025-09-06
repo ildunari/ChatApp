@@ -23,13 +23,16 @@ struct SuggestionChips: View {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(T.accentSoft)
                             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(T.borderSoft))
+                            .shadow(color: T.shadow.opacity(0.12), radius: 6, y: 2)
                     )
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 4)
         }
-        .frame(height: 60) // fixed height so it never collides with input bar
+        .frame(height: 60)
+        // Important: chips sit on canvas background, not input bar
+        .background(T.bg)
     }
 }
 
@@ -53,10 +56,7 @@ struct InputBar: View {
 
     var body: some View {
         HStack(spacing: InputMetrics.rowSpacing) {
-            Button(action: { onPlus?() }) {
-                Image(systemName: "plus")
-                    .font(.system(size: 18, weight: .bold))
-            }
+            Button(action: { onPlus?() }) { AppIcon.plus(18) }
             .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
             .background(Circle().fill(T.accentSoft))
 
@@ -76,15 +76,13 @@ struct InputBar: View {
                 if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     // Voice controls when input is empty (match '+' button style)
                     Button(action: { onMic?() }) {
-                        Image(systemName: "mic")
-                            .font(.system(size: 18, weight: .bold))
+                        AppIcon.microphone(18)
                             .foregroundStyle(T.textSecondary)
                             .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
                             .background(Circle().fill(T.accentSoft))
                     }
                     Button(action: { onLive?() }) {
-                        Image(systemName: "waveform")
-                            .font(.system(size: 18, weight: .bold))
+                        AppIcon.waveform(18)
                             .foregroundStyle(T.accent)
                             .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
                             .background(Circle().fill(T.accentSoft))
@@ -92,8 +90,7 @@ struct InputBar: View {
                 } else {
                     // Send button only when there is text, styled like a small circle
                     Button(action: onSend) {
-                        Image(systemName: "paperplane.fill")
-                            .font(.system(size: 18, weight: .bold))
+                        AppIcon.paperPlane(18)
                             .foregroundStyle(T.accent)
                             .frame(width: InputMetrics.sendSize, height: InputMetrics.sendSize)
                             .background(Circle().fill(T.accentSoft))

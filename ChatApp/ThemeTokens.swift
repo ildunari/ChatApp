@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AppThemeStyle: String, CaseIterable, Identifiable {
-    case terracotta, coolSlate, forest, lavender, highContrast
+    case terracotta, sand, coolSlate, lavender, highContrast
     var id: String { rawValue }
 }
 
@@ -36,21 +36,22 @@ struct ThemeFactory {
         let paper      = Color(red: 0.97, green: 0.96, blue: 0.93)
         let paperDark  = Color(red: 0.10, green: 0.10, blue: 0.10)
 
-        let terra      = Color(red: 0.85, green: 0.47, blue: 0.36)
-        let slate      = Color(red: 0.22, green: 0.33, blue: 0.43)
-        let forest     = Color(red: 0.28, green: 0.42, blue: 0.32)
-        let lavender   = Color(red: 0.47, green: 0.45, blue: 0.65)
+        let terra      = Color(red: 0.85, green: 0.47, blue: 0.36)   // soft terracotta
+        let sandLight  = Color(red: 0.94, green: 0.82, blue: 0.58)   // pastel sand (Claude-adjacent)
+        let sandDeep   = Color(red: 0.86, green: 0.70, blue: 0.40)
+        let slate      = Color(red: 0.22, green: 0.33, blue: 0.43)   // cool slate
+        let lavender   = Color(red: 0.47, green: 0.45, blue: 0.65)   // muted lavender
 
         let isDark = (colorScheme == .dark)
 
         let accent: Color
         let accentSoft: Color
         switch style {
-        case .terracotta:   accent = terra;    accentSoft = terra.opacity(0.14)
-        case .coolSlate:    accent = slate;    accentSoft = slate.opacity(0.14)
-        case .forest:       accent = forest;   accentSoft = forest.opacity(0.14)
-        case .lavender:     accent = lavender; accentSoft = lavender.opacity(0.14)
-        case .highContrast: accent = .orange;  accentSoft = Color.orange.opacity(0.20)
+        case .terracotta:   accent = terra;                             accentSoft = terra.opacity(0.14)
+        case .sand:         accent = isDark ? sandDeep : sandLight;     accentSoft = accent.opacity(0.20)
+        case .coolSlate:    accent = slate;                             accentSoft = slate.opacity(0.14)
+        case .lavender:     accent = lavender;                          accentSoft = lavender.opacity(0.14)
+        case .highContrast: accent = .orange;                           accentSoft = Color.orange.opacity(0.20)
         }
 
         return ThemeTokens(
@@ -86,4 +87,3 @@ extension EnvironmentValues {
 extension View {
     func theme(_ tokens: ThemeTokens) -> some View { environment(\.tokens, tokens) }
 }
-
