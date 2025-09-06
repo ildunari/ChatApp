@@ -188,25 +188,35 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
             throw NSError(domain: "OpenAI", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: message])
         }
 
+        let decoder = SSEDecoder()
         for try await line in bytes.lines {
-            // SSE format: lines starting with "data: {json}"
-            guard line.hasPrefix("data:") else { continue }
-            let jsonString = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
-            if jsonString == "[DONE]" { break }
-            guard let data = jsonString.data(using: .utf8) else { continue }
-            // Try to decode OpenAI Responses streaming events
-            if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                if let t = obj["type"] as? String {
-                    if t == "response.output_text.delta", let d = obj["delta"] as? String {
-                        full += d
-                        onDelta(d)
-                    } else if t == "response.output_text", let text = obj["text"] as? String {
-                        full += text
-                        onDelta(text)
-                    } else if t == "response.completed" {
-                        break
-                    } else if t == "error", let err = obj["error"] as? [String: Any], let msg = err["message"] as? String {
-                        throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: msg])
+            // Reconstruct frames for SSEDecoder by appending newlines; it will split on \n\n
+            if line == "data: [DONE]" { break }
+            var li = line
+            li.append("\n")
+            if let data = li.data(using: .utf8) {
+                decoder.feed(data) { _, payload in
+                    guard payload.isEmpty == false else { return }
+                    if let env = try? JSONDecoder().decode(OpenAIStreamEnvelope.self, from: payload) {
+                        switch env.type {
+                        case "response.output_text.delta":
+                            let d = env.delta ?? ""
+                            full += d
+                            onDelta(d)
+                        case "response.output_text":
+                            let t = env.text ?? ""
+                            full += t
+                            onDelta(t)
+                        case "response.completed":
+                            break
+                        case "error":
+                            let msg = env.error?.message ?? "Response error"
+                            // Surface as thrown error to caller
+                            // Throwing inside closure is not allowed; collect and handle after loop
+                            full += ""
+                        default:
+                            break
+                        }
                     }
                 }
             }

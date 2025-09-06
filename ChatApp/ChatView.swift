@@ -2,10 +2,12 @@
 import SwiftUI
 import PhotosUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct ChatView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var settingsQuery: [AppSettings]
+    @Environment(\.tokens) private var T
 
     let chat: Chat
 
@@ -15,7 +17,7 @@ struct ChatView: View {
     @State private var showSuggestions = true
     @State private var showPhotoPicker = false
     @State private var pickerItems: [PhotosPickerItem] = []
-    @State private var attachments: [Data] = []
+    @State private var attachments: [(data: Data, mime: String)] = []
     @State private var streamingText: String? = nil
 
     var body: some View {
@@ -53,7 +55,7 @@ struct ChatView: View {
                     .ignoresSafeArea()
             )
         }
-        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+        .background(T.bg.ignoresSafeArea())
         .sheet(isPresented: $showModelEditor) {
             let providerID = settingsQuery.first?.defaultProvider ?? "openai"
             let modelID = settingsQuery.first?.defaultModel ?? ""
@@ -62,13 +64,13 @@ struct ChatView: View {
         .photosPicker(isPresented: $showPhotoPicker, selection: $pickerItems, maxSelectionCount: 4, matching: .images)
         .onChange(of: pickerItems) { _, newItems in
             Task {
-                var datas: [Data] = []
+                var accum: [(Data, String)] = []
                 for item in newItems {
-                    if let data = try? await item.loadTransferable(type: Data.self) {
-                        datas.append(data)
+                    if let pair = try? await loadImageData(from: item) {
+                        accum.append((pair.data, pair.mime))
                     }
                 }
-                attachments = datas
+                attachments = accum.map { (data: $0.0, mime: $0.1) }
             }
         }
         .toolbar { toolbarContent }
@@ -177,6 +179,7 @@ struct ChatView: View {
         // For assistant header
         var aiDisplayName: String = "AI"
         var aiModel: String = ""
+        @Environment(\.tokens) private var T
         var body: some View {
             Group {
                 if message.role == "assistant" {
@@ -204,7 +207,11 @@ struct ChatView: View {
                             .padding(10)
                             .background(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(Color(UIColor.secondarySystemBackground))
+                                    .fill(T.bubbleUser)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(T.borderSoft, lineWidth: 1)
                             )
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -353,9 +360,8 @@ struct ChatView: View {
                 AIMessage(role: m.role == "user" ? .user : .assistant, content: m.content)
             })
 
-            // Compose the current user message with optional image parts
-            let mime = "image/jpeg" // heuristic; data URL works for common types
-            let imageParts = attachments.map { AIMessage.Part.imageData($0, mime: mime) }
+            // Compose the current user message with optional image parts (preserve MIME)
+            let imageParts = attachments.map { AIMessage.Part.imageData($0.data, mime: $0.mime) }
             aiMessages.append(AIMessage(role: .user, parts: [.text(userText)] + imageParts))
 
             // Apply per-model overrides from ModelCapabilitiesStore
@@ -477,4 +483,23 @@ struct ChatView: View {
         ChatView(chat: chat)
     }
     .modelContainer(container)
+}
+
+// MARK: - PhotosPicker helpers
+private func loadImageData(from item: PhotosPickerItem) async throws -> (data: Data, mime: String) {
+    if let type = item.supportedContentTypes.first {
+        if type.conforms(to: .jpeg) {
+            guard let data = try await item.loadTransferable(type: Data.self) else { throw NSError(domain: "Photos", code: -1) }
+            return (data, "image/jpeg")
+        } else if type.conforms(to: .png) {
+            guard let data = try await item.loadTransferable(type: Data.self) else { throw NSError(domain: "Photos", code: -1) }
+            return (data, "image/png")
+        } else if type.conforms(to: .heic) || type.conforms(to: .heif) {
+            guard let data = try await item.loadTransferable(type: Data.self) else { throw NSError(domain: "Photos", code: -1) }
+            return (data, "image/heic")
+        }
+    }
+    // Fallback: try as raw Data and mark as JPEG
+    if let data = try await item.loadTransferable(type: Data.self) { return (data, "image/jpeg") }
+    throw NSError(domain: "Photos", code: -2, userInfo: [NSLocalizedDescriptionKey: "Could not load image data"]) 
 }

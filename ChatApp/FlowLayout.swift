@@ -6,7 +6,7 @@ struct FlowLayout: Layout {
     var spacing: CGFloat = 4
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? .infinity
+        let width = proposal.width ?? 10_000 // avoid infinity math; act like unconstrained
         var x: CGFloat = 0
         var y: CGFloat = 0
         var lineHeight: CGFloat = 0
@@ -40,4 +40,3 @@ struct FlowLayout: Layout {
         }
     }
 }
-

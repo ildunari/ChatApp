@@ -62,7 +62,9 @@ private func parseBlocks(from text: String) -> [Block] {
             let lang = langStr.isEmpty ? nil : String(langStr)
             let afterLang = afterTicks.dropFirst(langStr.count)
             if let (body, rest) = takeUntil("```", in: afterLang) {
-                tokens.append(.code(lang: lang, body: String(body.dropFirst())))
+                // Only strip a single leading newline if present (avoid trimming first code character)
+                let bodyString = body.first == "\n" ? String(body.dropFirst()) : String(body)
+                tokens.append(.code(lang: lang, body: bodyString))
                 remainder = rest
                 continue
             } else {

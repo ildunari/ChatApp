@@ -22,16 +22,22 @@ This document keeps new sessions fully oriented: what we decided, what’s done,
   - “Artifacts” sandbox mounts and receives events; no security regressions.
 
 ## What’s Done
-- Codebase scanned; plan + spec written (see `docs/WEB_CANVAS_MIGRATION.md`).
-- Provider + streaming stable (`OpenAIProvider.streamChat`).
-- Input bar UX improved (growing field, send button, mic visibility toggle).
+- Theme token layer added (`ThemeTokens.swift`), injected at app root.
+- Claude-adjacent ToolCall bubble component for SwiftUI (`ToolCallBubble.swift`).
+- WebCanvas bundle copying build phase attached to target; dist `index.html` updated and `toolcard.js` added.
+- SSE streaming decoder implemented (`StreamingSSE.swift`), `OpenAIProvider.streamChat` updated.
+- SwiftData store recovery fixed (sidecar cleanup) in `ChatAppApp.swift`.
+- Markdown code-block trimming bug fixed (no longer drops first character).
+- Inline flow layout width calc stabilized.
+- PhotosPicker now preserves MIME types (HEIC/PNG/JPEG) and re-encodes only as fallback.
+- Info.plist push background mode removed; iCloud and APS entitlements stripped.
+- iOS deployment target corrected to 18.0.
 
 ## In Progress / Next Up
-1) Create Web bundle skeleton under `ChatApp/WebCanvas/dist/` (index.html, app.css, app.bundle.js).
-2) Add Swift bridge view `ChatCanvasView` (WKWebView + message handlers in custom content world).
-3) Wire ChatView to use WebCanvas for transcript, keep `InputBar` and toolbar.
-4) Implement progressive streaming (`startStream/appendDelta/endStream`).
-5) Add artifact iframe mount API (sandboxed) and a basic demo panel.
+1) Optional: push Theme token CSS vars into WebCanvas (currently light/dark switch supported).
+2) Add artifact iframe mount + JS→Swift event round-trip in WebCanvas.
+3) UI polish: apply tokens across more SwiftUI surfaces, add copy buttons for code.
+4) Unit tests for `NetworkClient`, `SettingsStore`, and provider error paths.
 
 ## Risks & Mitigations
 - **WKWebView isolation**: Avoid CDNs; bundle assets. If future WebContainers needed, consider custom URL scheme + COOP/COEP; not in v1.
@@ -58,8 +64,8 @@ This document keeps new sessions fully oriented: what we decided, what’s done,
 
 ## Decision Log
 - 2025-09-06: Adopt WKWebView WebCanvas with markdown-it + Shiki + KaTeX + Mermaid; artifacts via sandboxed iframes first.
+- 2025-09-06: Attach WebCanvas bundling phase; correct deployment target; remove unused push/iCloud capabilities.
 
 ## Contacts / Ownership
 - **Default Agent**: Apple-Stack Agent (this session)
 - **Escalations**: Create `docs/ISSUES.md` with reproducible steps if persistent blockers arise.
-

@@ -37,6 +37,14 @@ final class ChatCanvasController: ObservableObject {
     func endStream(id: String) { callJS("window.ChatCanvas && window.ChatCanvas.endStream(\"\(escape(id))\");") }
     func setTheme(_ theme: CanvasTheme) { callJS("window.ChatCanvas && window.ChatCanvas.setTheme(\"\(theme.rawValue)\");") }
     func scrollToBottom() { callJS("window.ChatCanvas && window.ChatCanvas.scrollToBottom();") }
+    func appendToolCard(title: String, subtitle: String? = nil, status: String = "idle", request: String? = nil, response: String? = nil, open: Bool = false) {
+        // Try ChatCanvas API first; fall back to ToolCard helper
+        let sub = subtitle != nil ? "\"\(escape(subtitle!))\"" : "null"
+        let req = request != nil ? "`\(escape(request!))`" : "null"
+        let res = response != nil ? "`\(escape(response!))`" : "null"
+        let js = "(window.ChatCanvas && ChatCanvas.appendToolCard ? ChatCanvas.appendToolCard : (window.ToolCard ? ToolCard.append : null)) && (window.ChatCanvas && ChatCanvas.appendToolCard ? ChatCanvas.appendToolCard({title: \"\(escape(title))\", subtitle: \(sub), status: \"\(escape(status))\", request: \(req ?? "null"), response: \(res ?? "null"), open: \(open ? "true" : "false")}) : (window.ToolCard && ToolCard.append({title: \"\(escape(title))\", subtitle: \(sub), status: \"\(escape(status))\", request: \(req ?? "null"), response: \(res ?? "null"), open: \(open ? "true" : "false")})));"
+        callJS(js)
+    }
 
     private func escape(_ s: String) -> String {
         s.replacingOccurrences(of: "\\", with: "\\\\")

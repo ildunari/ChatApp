@@ -30,13 +30,11 @@ struct ChatAppApp: App {
         do {
             return try makeContainer()
         } catch {
-            // Attempt a one-time recovery by removing the SQLite store (and sidecars) and recreating
-            let sidecars = ["", "-wal", "-shm"].map { storeURL.appendingPathExtension("sqlite").deletingPathExtension().appendingPathExtension("sqlite\($0)") }
-            // Our storeURL already ends with .sqlite; remove it and common sidecars just in case
-            let candidates = [storeURL, storeURL.deletingPathExtension().appendingPathExtension("sqlite-wal"), storeURL.deletingPathExtension().appendingPathExtension("sqlite-shm")]
-            for url in candidates + sidecars {
-                try? fm.removeItem(at: url)
-            }
+            // Attempt a one-time recovery by removing the SQLite store and sidecars, then recreate
+            let db = storeURL // e.g., .../ChatApp.sqlite
+            let wal = db.deletingPathExtension().appendingPathExtension("sqlite-wal")
+            let shm = db.deletingPathExtension().appendingPathExtension("sqlite-shm")
+            for url in [db, wal, shm] { try? fm.removeItem(at: url) }
             do {
                 return try makeContainer()
             } catch {

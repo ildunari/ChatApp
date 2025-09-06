@@ -10,12 +10,15 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
     @Query(sort: \Chat.createdAt, order: .reverse) private var chats: [Chat]
+    @Query private var settingsQuery: [AppSettings]
     @State private var showingSettings = false
     @State private var initialChat: Chat? = nil
     @State private var showInitialChat = false
 
     var body: some View {
+        let tokens = resolvedTokens()
         NavigationStack {
             List {
                 ForEach(chats) { chat in
@@ -80,6 +83,8 @@ struct ContentView: View {
                 EmptyView()
             }
         }
+        .theme(tokens)
+        .background(tokens.bg.ignoresSafeArea())
     }
 
     private func addChat() {
@@ -110,6 +115,22 @@ struct ContentView: View {
         try? modelContext.save()
         initialChat = chat
         showInitialChat = true
+    }
+}
+
+private extension ContentView {
+    func resolvedTokens() -> ThemeTokens {
+        let paletteID = settingsQuery.first?.chatBubbleColorID ?? "terracotta"
+        let style: AppThemeStyle = {
+            switch paletteID.lowercased() {
+            case "slate", "coolslate": return .coolSlate
+            case "forest", "sage", "green": return .forest
+            case "lavender", "purple": return .lavender
+            case "contrast", "highcontrast", "hc": return .highContrast
+            default: return .terracotta
+            }
+        }()
+        return ThemeFactory.make(style: style, colorScheme: colorScheme)
     }
 }
 
