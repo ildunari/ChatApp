@@ -108,6 +108,11 @@ This is a SwiftUI-based iOS chat application with AI provider integration, built
 - **Default**: Read-only unless explicitly asked to write
 - **Use**: For researching similar implementations
 
+#### Xcode Diagnostics MCP
+- **When**: Build produces errors/warnings; after CI runs; before PR
+- **Key Tools**: `get_xcode_projects`, `get_project_diagnostics`
+- **Act on**: Prioritize errors, address deprecations, eliminate main-thread blockers
+
 ## Documentation Discipline (Zero-Hallucination Policy)
 
 ### Apple APIs
@@ -214,6 +219,20 @@ Use **context7** to pull current documentation:
 8. **Cleanup**: Remove temp files, stop log capture
 9. **Report**: Structured summary with next steps
 
+## Simulator Refresh Workflow (After Significant Changes)
+
+**Important**: Reuse existing simulator. Do not create new devices unless user asks.
+
+1. **Build**: `xcodebuildmcp.build_sim` with booted simulator UUID
+2. **Get path**: `get_sim_app_path` for built app location
+3. **Install**: `install_app_sim` on same simulator
+4. **Launch**: `launch_app_sim` with bundle ID
+5. **Logs** (optional): `start_sim_log_cap` → `stop_sim_log_cap`
+
+**Handle Issues**:
+- If "Requires newer iOS": Use booted runtime or rebuild for that version
+- If "Launching..." hangs: Delete app, restart simulator, reinstall
+
 ## Pitfalls to Avoid
 
 - Never assume scheme/simulator names → always list explicitly
@@ -222,6 +241,9 @@ Use **context7** to pull current documentation:
 - Never ignore SwiftData relationship constraints → test cascading deletes
 - Never commit API keys → use keychain storage only
 - Never implement APIs without sosumi verification → check documentation first
+- Never create duplicate simulators → reuse existing booted devices
+- Never ignore Xcode Diagnostics warnings → address before PR
+- Never skip lint/format checks → configure SwiftFormat and SwiftLint
 
 ## Dependencies
 
@@ -236,3 +258,30 @@ Use **context7** to pull current documentation:
 - SwiftUI, SwiftData, Foundation, PhotosUI for core functionality
 - Network framework for HTTP requests
 - Security framework for keychain operations
+
+## Proactive Agent Mode
+
+After any meaningful edit:
+- Build → run quick tests → fix small issues immediately
+- Refresh simulator app if UI or runtime behavior changed
+- Capture 1-2 screenshots and 10/10 log lines for report
+- Commit with Conventional Commit and push to main (unless disabled)
+- Offer next step options: "Run full UI tests?", "Add feature?", "Clean artifacts?"
+- Clean up: remove temp files, revert debug flags
+
+## Git Workflow
+
+- Always keep `main` deployable; use feature branches for risky work
+- After major changes: commit with Conventional Commit message
+- Push immediately to `origin main` or active feature branch
+- Example: `feat: add OpenAI image provider` then `git push -u origin main`
+- Avoid committing user-specific Xcode data (covered by .gitignore)
+
+## Project Status Documentation
+
+**Maintain these files**:
+- `docs/PROJECT_STATUS.md`: Rolling status/handoff (update each session)
+- `docs/TODO.md`: Current task checklist
+- `docs/WEB_CANVAS_MIGRATION.md`: Migration specifications
+- `TASKS.md`: Checkbox plan with ≤8 atomic steps
+- `DECISIONS.md`: Architecture decisions with doc links
