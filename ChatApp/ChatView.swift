@@ -157,9 +157,9 @@ struct ChatView: View {
                                 MessageRow(message: message)
                             }
                         }
-                        if let partial = streamingText {
-                            StreamingRow(partial: partial)
-                        } else if isSending {
+                if let partial = streamingText {
+                    StreamingRow(partial: partial)
+                } else if isSending {
                             HStack { ProgressView(); Text("Thinking…").foregroundStyle(.secondary) }
                                 .padding(.horizontal)
                         }
@@ -226,6 +226,7 @@ struct ChatView: View {
         let partial: String
         var aiDisplayName: String = "AI"
         var aiModel: String = ""
+        @Environment(\.tokens) private var T
         var body: some View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
@@ -253,11 +254,7 @@ struct ChatView: View {
                         HStack {
                             Text(m)
                             if m == (settingsQuery.first?.defaultModel ?? "") {
-                                #if canImport(PhosphorSwift)
-                                Ph.check.bold.frame(width: 14, height: 14)
-                                #else
-                                Image(systemName: "checkmark")
-                                #endif
+                                AppIcon.checkCircle(true, size: 14)
                             }
                         }
                     }
@@ -265,36 +262,17 @@ struct ChatView: View {
                 Divider()
                 Button {
                     showModelEditor = true
-                } label: {
-                    HStack(spacing: 6) {
-                        #if canImport(PhosphorSwift)
-                        Ph.info.bold.frame(width: 14, height: 14)
-                        #else
-                        Image(systemName: "info.circle")
-                        #endif
-                        Text("Model Info")
-                    }
-                }
+                } label: { HStack(spacing: 6) { AppIcon.info(14); Text("Model Info") } }
             } label: {
                 HStack(spacing: 4) {
                     Text(currentModelDisplay()).font(.headline)
-                    #if canImport(PhosphorSwift)
-                    Ph.caret_right.bold.frame(width: 10, height: 10)
-                    #else
-                    Image(systemName: "chevron.right").font(.caption)
-                    #endif
+                    AppIcon.chevronDown(10).rotationEffect(.degrees(-90))
                 }
                 .contentShape(Rectangle())
             }
         }
         ToolbarItem(placement: .navigationBarTrailing) {
-            Button { } label: {
-                #if canImport(PhosphorSwift)
-                Ph.target.bold.frame(width: 18, height: 18)
-                #else
-                Image(systemName: "viewfinder.circle")
-                #endif
-            }
+            Button { } label: { AppIcon.info(18) }
         }
     }
 

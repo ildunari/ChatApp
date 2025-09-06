@@ -35,22 +35,22 @@ enum AppIcon {
     }
     @ViewBuilder static func paperPlane(_ size: CGFloat = 18) -> some View {
         #if canImport(PhosphorSwift)
-        // Phosphor name: paper-plane-tilt → paper_plane_tilt
-        Ph.paper_plane_tilt.bold.frame(width: size, height: size)
+        // Phosphor name: paper-plane-tilt
+        Ph.paperPlaneTilt.bold.frame(width: size, height: size)
         #else
         Image(systemName: "paperplane.fill").font(.system(size: size, weight: .bold))
         #endif
     }
     @ViewBuilder static func chevronDown(_ size: CGFloat = 12) -> some View {
         #if canImport(PhosphorSwift)
-        Ph.caret_down.bold.frame(width: size, height: size)
+        Ph.caretDown.bold.frame(width: size, height: size)
         #else
         Image(systemName: "chevron.down").font(.system(size: size, weight: .bold))
         #endif
     }
     @ViewBuilder static func chevronUp(_ size: CGFloat = 12) -> some View {
         #if canImport(PhosphorSwift)
-        Ph.caret_up.bold.frame(width: size, height: size)
+        Ph.caretUp.bold.frame(width: size, height: size)
         #else
         Image(systemName: "chevron.up").font(.system(size: size, weight: .bold))
         #endif
@@ -78,7 +78,7 @@ enum AppIcon {
     }
     @ViewBuilder static func checkCircle(_ filled: Bool = true, size: CGFloat = 18) -> some View {
         #if canImport(PhosphorSwift)
-        (filled ? Ph.check_circle : Ph.circle).bold.frame(width: size, height: size)
+        (filled ? Ph.checkCircle : Ph.circle).bold.frame(width: size, height: size)
         #else
         Image(systemName: filled ? "checkmark.circle.fill" : "circle").font(.system(size: size, weight: .bold))
         #endif
@@ -86,10 +86,9 @@ enum AppIcon {
     @ViewBuilder static func starsHeader(_ size: CGFloat = 14) -> some View {
         #if canImport(PhosphorSwift)
         // Use "moon-stars" for assistant header flair
-        Ph.moon_stars.bold.frame(width: size, height: size)
+        Ph.moonStars.bold.frame(width: size, height: size)
         #else
         Image(systemName: "sparkles").font(.system(size: size, weight: .bold))
         #endif
     }
 }
-

@@ -42,7 +42,7 @@ final class ChatCanvasController: ObservableObject {
         let sub = subtitle != nil ? "\"\(escape(subtitle!))\"" : "null"
         let req = request != nil ? "`\(escape(request!))`" : "null"
         let res = response != nil ? "`\(escape(response!))`" : "null"
-        let js = "(window.ChatCanvas && ChatCanvas.appendToolCard ? ChatCanvas.appendToolCard : (window.ToolCard ? ToolCard.append : null)) && (window.ChatCanvas && ChatCanvas.appendToolCard ? ChatCanvas.appendToolCard({title: \"\(escape(title))\", subtitle: \(sub), status: \"\(escape(status))\", request: \(req ?? "null"), response: \(res ?? "null"), open: \(open ? "true" : "false")}) : (window.ToolCard && ToolCard.append({title: \"\(escape(title))\", subtitle: \(sub), status: \"\(escape(status))\", request: \(req ?? "null"), response: \(res ?? "null"), open: \(open ? "true" : "false")})));"
+        let js = "(window.ChatCanvas && ChatCanvas.appendToolCard ? ChatCanvas.appendToolCard : (window.ToolCard ? ToolCard.append : null)) && (window.ChatCanvas && ChatCanvas.appendToolCard ? ChatCanvas.appendToolCard({title: \"\(escape(title))\", subtitle: \(sub), status: \"\(escape(status))\", request: \(req), response: \(res), open: \(open ? "true" : "false")}) : (window.ToolCard && ToolCard.append({title: \"\(escape(title))\", subtitle: \(sub), status: \"\(escape(status))\", request: \(req), response: \(res), open: \(open ? "true" : "false")})));"
         callJS(js)
     }
 

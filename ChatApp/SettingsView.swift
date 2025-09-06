@@ -18,11 +18,7 @@ struct SettingsView: View {
                         ProvidersSettingsView(store: store)
                     } label: {
                         HStack(spacing: 12) {
-                            #if canImport(PhosphorSwift)
-                            Ph.bolt.bold.frame(width: 18, height: 18).foregroundStyle(.blue)
-                            #else
-                            Image(systemName: "bolt.horizontal.circle.fill").foregroundStyle(.blue)
-                            #endif
+                            AppIcon.info(18).foregroundStyle(.blue)
                             VStack(alignment: .leading) {
                                 Text("Providers")
                                 Text("Manage API keys and models").font(.footnote).foregroundStyle(.secondary)
@@ -33,11 +29,7 @@ struct SettingsView: View {
                         DefaultChatSettingsView(store: store)
                     } label: {
                         HStack(spacing: 12) {
-                            #if canImport(PhosphorSwift)
-                            Ph.sliders.bold.frame(width: 18, height: 18).foregroundStyle(.purple)
-                            #else
-                            Image(systemName: "slider.horizontal.3").foregroundStyle(.purple)
-                            #endif
+                            AppIcon.info(18).foregroundStyle(.purple)
                             VStack(alignment: .leading) {
                                 Text("Default Chat")
                                 Text("System prompt, temperature, tokens").font(.footnote).foregroundStyle(.secondary)
@@ -50,11 +42,7 @@ struct SettingsView: View {
                         InterfaceSettingsView(store: store)
                     } label: {
                         HStack(spacing: 12) {
-                            #if canImport(PhosphorSwift)
-                            Ph.palette.bold.frame(width: 18, height: 18).foregroundStyle(.orange)
-                            #else
-                            Image(systemName: "paintpalette.fill").foregroundStyle(.orange)
-                            #endif
+                            AppIcon.info(18).foregroundStyle(.orange)
                             VStack(alignment: .leading) {
                                 Text("Appearance")
                                 Text("Theme, font, text size, bubble colors").font(.footnote).foregroundStyle(.secondary)
@@ -151,19 +139,15 @@ private struct ProviderRow<Destination: View>: View {
     var body: some View {
         NavigationLink { destination() } label: {
             HStack(spacing: 12) {
-                #if canImport(PhosphorSwift)
-                // Minimal mapping for a few expected SF symbols used in previews
+                // Minimal mapping for previews using AppIcon helpers
                 Group {
                     switch symbol {
-                    case "gear": Ph.gear.bold
-                    case "plus": Ph.plus.bold
-                    case "info.circle": Ph.info.bold
-                    default: Ph.info.bold
+                    case "gear": AnyView(AppIcon.gear(16))
+                    case "plus": AnyView(AppIcon.plus(16))
+                    case "info.circle": AnyView(AppIcon.info(16))
+                    default: AnyView(AppIcon.info(16))
                     }
-                }.frame(width: 16, height: 16)
-                #else
-                Image(systemName: symbol)
-                #endif
+                }
                     .foregroundStyle(.teal)
                 Text(title)
             }
@@ -355,11 +339,7 @@ private struct ModelRowWithInfo: View {
         HStack {
             Button(action: { isOn.toggle() }) {
                 HStack {
-                    #if canImport(PhosphorSwift)
-                    (isOn ? Ph.check_circle : Ph.circle).bold.frame(width: 18, height: 18)
-                    #else
-                    Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                    #endif
+                    AppIcon.checkCircle(isOn, size: 18)
                         .foregroundStyle(isOn ? .blue : .secondary)
                     Text(title)
                         .foregroundStyle(.primary)
@@ -368,11 +348,7 @@ private struct ModelRowWithInfo: View {
             }
             .buttonStyle(.plain)
             Button(action: onInfo) {
-                #if canImport(PhosphorSwift)
-                Ph.info.bold.frame(width: 16, height: 16)
-                #else
-                Image(systemName: "info.circle")
-                #endif
+                AppIcon.info(16)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Model Info")
@@ -651,7 +627,7 @@ private struct InterfaceSettingsView: View {
     @State private var sizeIndex: Double = 2
 
     private let sizeLabels = ["XS", "S", "M", "L", "XL"]
-    @Environment(\.colorScheme) private var colorScheme
+    // already has colorScheme above; do not redeclare
 
     private var previewFont: Font {
         switch store.interfaceFontStyle {
@@ -872,11 +848,7 @@ private struct FontOptionCard: View {
                 .padding(14)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 if selected {
-                    #if canImport(PhosphorSwift)
-                    Ph.check_circle.bold.frame(width: 18, height: 18)
-                    #else
-                    Image(systemName: "checkmark.circle.fill")
-                    #endif
+                    AppIcon.checkCircle(true, size: 18)
                         .foregroundStyle(Color.accentColor)
                         .padding(8)
                 }
