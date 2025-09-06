@@ -14,6 +14,17 @@ This guide helps contributors work efficiently in this SwiftUI iOS project.
 - Run tests (CLI): `xcodebuild test -project ChatApp.xcodeproj -scheme ChatApp -destination 'platform=iOS Simulator,name=iPhone 16'`.
 - Run a specific test: `xcodebuild test -only-testing:ChatAppTests/YourTestName …` (adjust names). Use `xcrun simctl list devices` to pick an available simulator.
 
+## Project Status & Docs
+- **Rolling Status/Handoff**: `docs/PROJECT_STATUS.md` (update each work session)
+- **Migration Spec**: `docs/WEB_CANVAS_MIGRATION.md` (source of truth for WebCanvas)
+- **Rolling TODO**: `docs/TODO.md` (checklist; keep fresh)
+
+Update flow per session:
+- Read `PROJECT_STATUS.md` (Snapshot date, Milestone, Risks)
+- Pick TODOs from `docs/TODO.md`; append details to Status → In Progress
+- After changes: update Status Snapshot + Decision Log; adjust TODOs
+- Include test notes and screenshots in your summary output
+
 ## Coding Style & Naming Conventions
 - Indentation: 4 spaces; trim trailing whitespace.
 - Swift: camelCase for vars/functions; PascalCase for types; one primary type per file.
@@ -148,3 +159,91 @@ This guide helps contributors work efficiently in this SwiftUI iOS project.
 - Artifacts: paths to builds, logs, screenshots.
 - Next: immediate follow‑ups and risks.
 - Consent needed: any high‑impact actions awaiting approval.
+
+---
+
+## Codebase Map (Repo‑Specific)
+
+- App Entry
+  - `ChatApp/ChatAppApp.swift` — Configures SwiftData `ModelContainer` with a persistent store in Application Support and a one‑time recovery path if the SQLite store is corrupted.
+
+- Data Models (SwiftData)
+  - `ChatApp/Models.swift`
+    - `Chat { id, title, createdAt, messages[] }` (cascade delete to messages)
+    - `Message { id, role(user|assistant), content, createdAt, chat }`
+    - `AppSettings { defaultProvider, defaultModel, defaultSystemPrompt, defaultTemperature, defaultMaxTokens, <enabled models per provider>, interfaceTheme, interfaceFontStyle, interfaceTextSizeIndex, chatBubbleColorID }`
+
+- Views (SwiftUI)
+  - `ChatApp/ContentView.swift` — Chat list (NavigationStack), creates initial chat on first launch.
+  - `ChatApp/ChatView.swift` — Chat screen with suggestions, photo picker attachments, streaming responses, model menu in toolbar.
+  - `ChatApp/AIResponseView.swift` — Segments assistant content into Markdown, Code, and Math blocks; supports inline `$...$` math and block `$$...$$` math with fallbacks.
+  - `ChatApp/ChatUI.swift` — `SuggestionChips`, `InputBar` components.
+  - `ChatApp/ChatStyles.swift` — MarkdownUI theme and shared visual constants.
+  - `ChatApp/MathWebView.swift` — KaTeX WebView fallback; prefers bundled assets under `ChatApp/KaTeX/`.
+  - `ChatApp/SettingsView.swift` — Providers, default chat, and interface settings flows (nested screens).
+
+- Settings & Services
+  - `ChatApp/SettingsStore.swift` — ObservableObject bridging SwiftData `AppSettings` with Keychain; primes from `Env/DevSecrets.env` in Debug via `EnvLoader`.
+  - `ChatApp/EnvLoader.swift` — Loads `DevSecrets.env` from bundle (Debug) to ease local development.
+  - `ChatApp/KeychainService.swift` — Save/read/delete API keys securely.
+  - `ChatApp/SystemPrompt.swift` — Master system prompt rules for the assistant.
+
+- Providers & Networking
+  - `ChatApp/AIProvider.swift` — Chat provider protocols, including advanced + streaming interfaces.
+  - `ChatApp/OpenAIProvider.swift` — Implements OpenAI Responses API (non‑stream + SSE streaming with helpful HTTP error mapping).
+  - `ChatApp/ImageProvider.swift` / `ChatApp/OpenAIImageProvider.swift` — Image generation contract and OpenAI Images implementation.
+  - `ChatApp/ProviderAPIs.swift` — Key verification and model listing for OpenAI/Anthropic/Google/XAI.
+  - `ChatApp/NetworkClient.swift` — Shared URLSession with sane timeouts; `get`/`postJSON` helpers.
+
+- Assets & Config
+  - `ChatApp/KaTeX/*` — Local KaTeX JS/CSS used by `MathWebView` when available.
+  - `ChatApp/Assets.xcassets/` — App icons and colors.
+  - `ChatApp/Info.plist`, `ChatApp/ChatApp.entitlements` — App metadata and capabilities.
+
+- Tests
+  - `ChatAppTests/*` — Unit test target scaffold.
+  - `ChatAppUITests/*` — UI test target scaffold, launch performance test, screenshot on launch.
+  - `ChatApp.xctestplan` — Test plan for coordinated runs.
+
+## Build & Dependencies Snapshot
+
+- Schemes: `ChatApp`, `MarkdownUI` (verified via `xcodebuild -list`, 2025‑09‑06)
+- SPM (resolved locally):
+  - MarkdownUI 2.4.1, cmark‑gfm 0.6.0, NetworkImage 6.0.1, SwiftMath 1.7.3, HighlighterSwift 1.1.7
+- Quick build check (2025‑09‑06): `xcodebuild -project ChatApp.xcodeproj -scheme ChatApp -destination 'generic/platform=iOS Simulator' build` succeeded.
+
+## Key Flows
+
+- Chat Send
+  1) User types in `InputBar` → `ChatView.send()` inserts a user `Message`.
+  2) Settings resolved from `SettingsStore` → provider constructed (`OpenAIProvider` today).
+  3) Messages mapped to `AIMessage` (text + optional image parts via `PhotosPicker`).
+  4) Streaming path updates `streamingText`; final reply is inserted as assistant `Message`.
+  5) Title autoupdates from first user message if default.
+
+- Settings
+  - `SettingsView` edits `SettingsStore` fields; on save, writes SwiftData + Keychain.
+  - Providers screen verifies API keys and lists models via `ProviderAPIs`.
+
+- Rendering
+  - Markdown (MarkdownUI theme), code highlighting (Highlightr/HighlighterSwift fallback), math via SwiftMath/iosMath or KaTeX WebView fallback.
+
+## Troubleshooting Notes
+
+- OpenAI streaming errors are surfaced with friendly messages (401/403/404/429/5xx) in `OpenAIProvider.streamChat`.
+- If chat persistence breaks, `ChatAppApp` attempts a one‑time SQLite store cleanup and re‑init.
+- If math doesn’t render, ensure KaTeX assets are present (or allow CDN) and that inline `$...$` is balanced.
+- No API keys? In Debug, add values to `Env/.env` (copied to bundle as `DevSecrets.env`) to prime Keychain on first run.
+
+## Backlog (Living)
+
+- Implement additional chat providers (Anthropic, Google, XAI) conforming to `AIProvider`/`AIProviderAdvanced`/`AIStreamingProvider`.
+- Add UI for image generation using `OpenAIImageProvider` and a lightweight gallery viewer.
+- Unit tests for `NetworkClient`, `KeychainService`, `SettingsStore`, `OpenAIProvider` (including SSE aggregation and error paths).
+- UI tests: first‑run flow (initial chat), model picker, Settings verify/refresh.
+- Bundle KaTeX offline and gate CDN usage behind a build flag; consider a privacy manifest if needed.
+- Model list caching per provider + manual refresh.
+
+## Decision Log
+
+- 2025‑09‑06: Added repo‑specific Codebase Map, build/dependency snapshot, key flows, troubleshooting, and backlog to AGENTS.md.

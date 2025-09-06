@@ -27,6 +27,8 @@ final class SettingsStore: ObservableObject {
     @Published var interfaceFontStyle: String // system | serif | rounded | mono
     @Published var interfaceTextSizeIndex: Int // 0...4
     @Published var chatBubbleColorID: String // palette id
+    @Published var promptCachingEnabled: Bool
+    @Published var useWebCanvas: Bool
 
     private let OPENAI_KEY_KEYCHAIN = "openai_api_key"
     private let ANTHROPIC_KEY_KEYCHAIN = "anthropic_api_key"
@@ -95,6 +97,8 @@ final class SettingsStore: ObservableObject {
         self.interfaceFontStyle = settings.interfaceFontStyle
         self.interfaceTextSizeIndex = settings.interfaceTextSizeIndex
         self.chatBubbleColorID = settings.chatBubbleColorID
+        self.promptCachingEnabled = settings.promptCachingEnabled
+        self.useWebCanvas = settings.useWebCanvas
     }
 
     func save() {
@@ -111,6 +115,8 @@ final class SettingsStore: ObservableObject {
         settings.interfaceFontStyle = interfaceFontStyle
         settings.interfaceTextSizeIndex = interfaceTextSizeIndex
         settings.chatBubbleColorID = chatBubbleColorID
+        settings.promptCachingEnabled = promptCachingEnabled
+        settings.useWebCanvas = useWebCanvas
         try? context.save()
 
         saveKeychain(key: OPENAI_KEY_KEYCHAIN, value: openAIAPIKey)

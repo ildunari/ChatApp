@@ -49,6 +49,12 @@ struct SettingsView: View {
                             }
                         }
                     }
+                    Toggle(isOn: $store.useWebCanvas) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Use Web Canvas")
+                            Text("Faster rendering with streaming, math, tables, code, artifacts slot").font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
                 }
                 Section("Defaults") {
                     Picker("Default Provider", selection: $store.defaultProvider) {
@@ -149,6 +155,8 @@ private struct ProviderDetailView: View {
     @State private var verifying = false
     @State private var verified: Bool? = nil
     @State private var loadingModels = false
+    private struct SelectedModel: Identifiable { let id: String }
+    @State private var activeModelForEdit: SelectedModel? = nil
 
     var body: some View {
         Form {
@@ -182,12 +190,17 @@ private struct ProviderDetailView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(available, id: \.self) { m in
-                        ModelCheckRow(title: m, isOn: bindingForModel(m))
+                        ModelRowWithInfo(title: m,
+                                         isOn: bindingForModel(m),
+                                         onInfo: { activeModelForEdit = SelectedModel(id: m) })
                     }
                 }
             }
         }
         .navigationTitle(provider.displayName)
+        .sheet(item: $activeModelForEdit) { selected in
+            ModelSettingsView(providerID: provider.rawValue, modelID: selected.id)
+        }
         .onAppear {
             apiKey = readAPIKey()
             available = enabledModelsAll()
@@ -254,20 +267,36 @@ private struct ProviderDetailView: View {
         verified = nil
         verifying = true
         let ok = await ProviderAPIs.verifyKey(provider: provider, apiKey: apiKey)
-        await MainActor.run {
-            verified = ok
-            verifying = false
+        if ok {
+            // Populate model info on successful verify
+            do {
+                let infos = try await ProviderAPIs.listModelInfos(provider: provider, apiKey: apiKey)
+                await MainActor.run {
+                    ModelCapabilitiesStore.putDefault(provider: provider.rawValue, infos: infos)
+                    self.available = infos.map { $0.id }
+                    // If defaults target this provider, clamp tokens to model limit when possible
+                    if store.defaultProvider == provider.rawValue,
+                       let cap = infos.first(where: { $0.id == store.defaultModel }),
+                       let out = cap.outputTokenLimit {
+                        store.maxTokens = min(store.maxTokens, out)
+                    }
+                }
+            } catch {
+                // ignore; keep simple list population as fallback
+            }
         }
+        await MainActor.run { verified = ok; verifying = false }
     }
 
     private func reloadModels() async {
         loadingModels = true
         do {
-            let models = try await ProviderAPIs.listModels(provider: provider, apiKey: apiKey)
+            let infos = try await ProviderAPIs.listModelInfos(provider: provider, apiKey: apiKey)
             await MainActor.run {
+                ModelCapabilitiesStore.putDefault(provider: provider.rawValue, infos: infos)
+                let models = infos.map { $0.id }
                 self.available = models
-                // Initialize enabled set if empty
-                if models.isEmpty == false {
+                if models.isEmpty == false { // seed enabled set if empty
                     switch provider {
                     case .openai: if store.openAIEnabled.isEmpty { store.openAIEnabled = Set(models.prefix(5)) }
                     case .anthropic: if store.anthropicEnabled.isEmpty { store.anthropicEnabled = Set(models.prefix(5)) }
@@ -275,26 +304,46 @@ private struct ProviderDetailView: View {
                     case .xai: if store.xaiEnabled.isEmpty { store.xaiEnabled = Set(models.prefix(5)) }
                     }
                 }
+                if store.defaultProvider == provider.rawValue,
+                   let cap = infos.first(where: { $0.id == store.defaultModel }),
+                   let out = cap.outputTokenLimit {
+                    store.maxTokens = min(store.maxTokens, out)
+                }
             }
         } catch {
-            await MainActor.run { self.available = [] }
+            // Fallback to simple list
+            do {
+                let models = try await ProviderAPIs.listModels(provider: provider, apiKey: apiKey)
+                await MainActor.run { self.available = models }
+            } catch {
+                await MainActor.run { self.available = [] }
+            }
         }
         loadingModels = false
     }
 }
 
-private struct ModelCheckRow: View {
+private struct ModelRowWithInfo: View {
     let title: String
     @Binding var isOn: Bool
+    var onInfo: () -> Void
     var body: some View {
-        Button(action: { isOn.toggle() }) {
-            HStack {
-                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isOn ? .blue : .secondary)
-                Text(title)
-                    .foregroundStyle(.primary)
-                Spacer()
+        HStack {
+            Button(action: { isOn.toggle() }) {
+                HStack {
+                    Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(isOn ? .blue : .secondary)
+                    Text(title)
+                        .foregroundStyle(.primary)
+                    Spacer()
+                }
             }
+            .buttonStyle(.plain)
+            Button(action: onInfo) {
+                Image(systemName: "info.circle")
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Model Info")
         }
     }
 }
@@ -330,15 +379,150 @@ private struct DefaultChatSettingsView: View {
             Section("Sampling") {
                 VStack(alignment: .leading) {
                     HStack { Text("Temperature"); Spacer(); Text(String(format: "%.2f", store.temperature)).foregroundStyle(.secondary) }
-                    Slider(value: $store.temperature, in: 0...2, step: 0.05)
+                    Slider(value: $store.temperature, in: 0...maxTemperature, step: 0.05)
                 }
                 VStack(alignment: .leading) {
                     HStack { Text("Max Tokens"); Spacer(); Text("\(store.maxTokens)").foregroundStyle(.secondary) }
-                    Slider(value: Binding(get: { Double(store.maxTokens) }, set: { store.maxTokens = Int($0) }), in: 64...8192, step: 32)
+                    Slider(value: Binding(get: { Double(store.maxTokens) }, set: { store.maxTokens = Int($0) }), in: 64...maxTokens, step: 32)
+                }
+                if supportsPromptCaching {
+                    Toggle(isOn: $store.promptCachingEnabled) {
+                        Label("Enable prompt caching (if supported)", systemImage: "bolt.horizontal.circle")
+                    }
                 }
             }
         }
         .navigationTitle("Default Chat")
+    }
+
+    // Dynamic limits derived from Provider→Model capability cache
+    private var caps: ProviderModelInfo? {
+        ModelCapabilitiesStore.get(provider: store.defaultProvider, model: store.defaultModel)
+    }
+    private var maxTemperature: Double { caps?.maxTemperature ?? 2.0 }
+    private var maxTokens: Double { Double(caps?.outputTokenLimit ?? 8192) }
+    private var supportsPromptCaching: Bool { caps?.supportsPromptCaching ?? false }
+}
+
+// MARK: - Model Settings Editor
+
+private struct ModelSettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let providerID: String
+    let modelID: String
+
+    // Working copy
+    @State private var displayName: String = ""
+    @State private var inputTokenLimit: String = "" // use text to allow empty
+    @State private var outputTokenLimit: String = ""
+    @State private var maxTemperature: Double = 2.0
+    @State private var supportsPromptCaching: Bool = false
+
+    // Originals for discard detection
+    @State private var original: ProviderModelInfo = .fallback(id: "")
+    @State private var defaults: ProviderModelInfo = .fallback(id: "")
+    @State private var showingDiscard: Bool = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Button("Restore Default") { restoreDefault() }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.blue)
+                }
+
+                Section("Model") {
+                    HStack { Text("ID"); Spacer(); Text(modelID).foregroundStyle(.secondary) }
+                    TextField("Display Name", text: $displayName)
+                }
+
+                Section("Limits") {
+                    TextField("Input Token Limit", text: $inputTokenLimit)
+                        .keyboardType(.numberPad)
+                    TextField("Output Token Limit", text: $outputTokenLimit)
+                        .keyboardType(.numberPad)
+                    VStack(alignment: .leading) {
+                        HStack { Text("Max Temperature"); Spacer(); Text(String(format: "%.2f", maxTemperature)).foregroundStyle(.secondary) }
+                        Slider(value: $maxTemperature, in: 0...4, step: 0.05)
+                    }
+                    Toggle("Supports Prompt Caching", isOn: $supportsPromptCaching)
+                }
+
+                if let defText = defaultSummary() {
+                    Section("Current Defaults (from API)") {
+                        Text(defText).font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .navigationTitle("Model Settings")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { attemptDismiss() } label: { Image(systemName: "xmark") }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { saveAndDismiss() }
+                }
+            }
+            .confirmationDialog("Discard changes?", isPresented: $showingDiscard, titleVisibility: .visible) {
+                Button("Discard Changes", role: .destructive) { dismiss() }
+                Button("Cancel", role: .cancel) { }
+            }
+            .onAppear { load() }
+        }
+    }
+
+    private func load() {
+        let pair = ModelCapabilitiesStore.getPair(provider: providerID, model: modelID)
+        let effective = ModelCapabilitiesStore.get(provider: providerID, model: modelID) ?? .fallback(id: modelID)
+        defaults = pair.defaults ?? .fallback(id: modelID)
+        original = effective
+
+        displayName = effective.displayName ?? ""
+        inputTokenLimit = effective.inputTokenLimit.map { String($0) } ?? ""
+        outputTokenLimit = effective.outputTokenLimit.map { String($0) } ?? ""
+        maxTemperature = effective.maxTemperature ?? 2.0
+        supportsPromptCaching = effective.supportsPromptCaching ?? false
+    }
+
+    private func currentInfo() -> ProviderModelInfo {
+        ProviderModelInfo(
+            id: modelID,
+            displayName: displayName.isEmpty ? nil : displayName,
+            inputTokenLimit: Int(inputTokenLimit),
+            outputTokenLimit: Int(outputTokenLimit),
+            maxTemperature: maxTemperature,
+            supportsPromptCaching: supportsPromptCaching
+        )
+    }
+
+    private func hasUnsavedChanges() -> Bool {
+        currentInfo() != original
+    }
+
+    private func attemptDismiss() {
+        if hasUnsavedChanges() { showingDiscard = true } else { dismiss() }
+    }
+
+    private func saveAndDismiss() {
+        let info = currentInfo()
+        ModelCapabilitiesStore.putUser(provider: providerID, model: modelID, info: info)
+        dismiss()
+    }
+
+    private func restoreDefault() {
+        ModelCapabilitiesStore.clearUser(provider: providerID, model: modelID)
+        load()
+    }
+
+    private func defaultSummary() -> String? {
+        guard let d = ModelCapabilitiesStore.getPair(provider: providerID, model: modelID).defaults else { return nil }
+        let input = d.inputTokenLimit.map(String.init) ?? "—"
+        let output = d.outputTokenLimit.map(String.init) ?? "—"
+        let temp = String(format: "%.2f", d.maxTemperature ?? 2.0)
+        let caching = (d.supportsPromptCaching ?? false) ? "Yes" : "No"
+        return "Input: \(input) • Output: \(output) • Max Temp: \(temp) • Caching: \(caching)"
     }
 }
 

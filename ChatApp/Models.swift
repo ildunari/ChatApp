@@ -63,6 +63,10 @@ final class AppSettings: Identifiable {
     var interfaceTextSizeIndex: Int
     // chat bubble color palette id (one of predefined ids)
     var chatBubbleColorID: String
+    // Prefer prompt caching when supported by the selected provider/model
+    var promptCachingEnabled: Bool
+    // Feature flag: use WKWebView WebCanvas for transcript rendering
+    var useWebCanvas: Bool
 
     init(
         id: UUID = UUID(),
@@ -78,7 +82,9 @@ final class AppSettings: Identifiable {
         interfaceTheme: String = "system",
         interfaceFontStyle: String = "system",
         interfaceTextSizeIndex: Int = 2,
-        chatBubbleColorID: String = "teal"
+        chatBubbleColorID: String = "teal",
+        promptCachingEnabled: Bool = false,
+        useWebCanvas: Bool = true
     ) {
         self.id = id
         self.defaultProvider = defaultProvider
@@ -94,5 +100,7 @@ final class AppSettings: Identifiable {
         self.interfaceFontStyle = interfaceFontStyle
         self.interfaceTextSizeIndex = interfaceTextSizeIndex
         self.chatBubbleColorID = chatBubbleColorID
+        self.promptCachingEnabled = promptCachingEnabled
+        self.useWebCanvas = useWebCanvas
     }
 }
