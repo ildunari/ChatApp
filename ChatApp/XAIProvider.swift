@@ -37,6 +37,9 @@ struct XAIProvider: AIProviderAdvanced {
             let top_p: Double?
             let max_tokens: Int?
             let stream: Bool
+            let presence_penalty: Double?
+            let frequency_penalty: Double?
+            let stop: [String]?
         }
         struct Resp: Decodable { struct Choice: Decodable { struct Message: Decodable { let content: String }
                 let message: Message }
@@ -56,12 +59,16 @@ struct XAIProvider: AIProviderAdvanced {
             }
         }
 
+        let caps = ModelCapabilitiesStore.get(provider: id, model: model)
         let req = Req(model: model,
                       messages: mapped,
                       temperature: temperature,
                       top_p: topP,
                       max_tokens: maxOutputTokens,
-                      stream: false)
+                      stream: false,
+                      presence_penalty: caps?.preferredPresencePenalty,
+                      frequency_penalty: caps?.preferredFrequencyPenalty,
+                      stop: caps?.stopSequences)
 
         let url = apiBase.appendingPathComponent("chat/completions")
         var urlReq = URLRequest(url: url)
@@ -81,4 +88,3 @@ struct XAIProvider: AIProviderAdvanced {
         return text
     }
 }
-

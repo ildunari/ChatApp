@@ -406,7 +406,7 @@ private struct DefaultChatSettingsView: View {
 
 // MARK: - Model Settings Editor
 
-private struct ModelSettingsView: View {
+struct ModelSettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     let providerID: String
@@ -426,6 +426,13 @@ private struct ModelSettingsView: View {
     @State private var preferredReasoningEffort: String? = nil // none|low|medium|high
     @State private var preferredVerbosity: String? = nil // none|low|medium|high
     @State private var disableSafetyFilters: Bool = true
+    @State private var preferredPresencePenalty: Double = 0
+    @State private var preferredFrequencyPenalty: Double = 0
+    @State private var stopSequences: String = "" // comma-separated
+    // Anthropic specifics
+    @State private var anthropicThinkingEnabled: Bool = false
+    @State private var anthropicThinkingBudget: String = ""
+    @State private var enablePromptCaching: Bool = false
 
     // Originals for discard detection
     @State private var original: ProviderModelInfo = .fallback(id: "")
@@ -471,6 +478,16 @@ private struct ModelSettingsView: View {
                         .keyboardType(.numberPad)
                     TextField("Preferred Max Output Tokens", text: $preferredMaxOutputTokens)
                         .keyboardType(.numberPad)
+                    // Penalties (OpenAI/XAI style)
+                    VStack(alignment: .leading) {
+                        HStack { Text("Presence Penalty"); Spacer(); Text(String(format: "%.2f", preferredPresencePenalty)).foregroundStyle(.secondary) }
+                        Slider(value: $preferredPresencePenalty, in: -2...2, step: 0.1)
+                    }
+                    VStack(alignment: .leading) {
+                        HStack { Text("Frequency Penalty"); Spacer(); Text(String(format: "%.2f", preferredFrequencyPenalty)).foregroundStyle(.secondary) }
+                        Slider(value: $preferredFrequencyPenalty, in: -2...2, step: 0.1)
+                    }
+                    TextField("Stop Sequences (comma-separated)", text: $stopSequences)
                     Picker("Reasoning Effort", selection: Binding(get: { preferredReasoningEffort ?? "none" }, set: { preferredReasoningEffort = ($0 == "none" ? nil : $0) })) {
                         Text("None").tag("none")
                         Text("Low").tag("low")
@@ -484,6 +501,11 @@ private struct ModelSettingsView: View {
                         Text("High").tag("high")
                     }
                     Toggle("Disable Google Safety Filters", isOn: $disableSafetyFilters)
+                    // Anthropic extras
+                    Toggle("Anthropic Thinking Enabled", isOn: $anthropicThinkingEnabled)
+                    TextField("Anthropic Thinking Budget (tokens)", text: $anthropicThinkingBudget)
+                        .keyboardType(.numberPad)
+                    Toggle("Enable Prompt Caching (Anthropic)", isOn: $enablePromptCaching)
                 }
 
                 if let defText = defaultSummary() {
@@ -527,6 +549,12 @@ private struct ModelSettingsView: View {
         preferredReasoningEffort = effective.preferredReasoningEffort
         preferredVerbosity = effective.preferredVerbosity
         disableSafetyFilters = effective.disableSafetyFilters ?? true
+        preferredPresencePenalty = effective.preferredPresencePenalty ?? 0
+        preferredFrequencyPenalty = effective.preferredFrequencyPenalty ?? 0
+        stopSequences = (effective.stopSequences ?? []).joined(separator: ", ")
+        anthropicThinkingEnabled = effective.anthropicThinkingEnabled ?? false
+        anthropicThinkingBudget = effective.anthropicThinkingBudget.map { String($0) } ?? ""
+        enablePromptCaching = effective.enablePromptCaching ?? false
     }
 
     private func currentInfo() -> ProviderModelInfo {
@@ -543,7 +571,13 @@ private struct ModelSettingsView: View {
             preferredMaxOutputTokens: Int(preferredMaxOutputTokens),
             preferredReasoningEffort: preferredReasoningEffort,
             preferredVerbosity: preferredVerbosity,
-            disableSafetyFilters: disableSafetyFilters
+            disableSafetyFilters: disableSafetyFilters,
+            preferredPresencePenalty: preferredPresencePenalty,
+            preferredFrequencyPenalty: preferredFrequencyPenalty,
+            stopSequences: stopSequences.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter{ !$0.isEmpty },
+            anthropicThinkingEnabled: anthropicThinkingEnabled,
+            anthropicThinkingBudget: Int(anthropicThinkingBudget),
+            enablePromptCaching: enablePromptCaching
         )
     }
 

@@ -54,6 +54,11 @@ struct ChatView: View {
             )
         }
         .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+        .sheet(isPresented: $showModelEditor) {
+            let providerID = settingsQuery.first?.defaultProvider ?? "openai"
+            let modelID = settingsQuery.first?.defaultModel ?? ""
+            ModelSettingsView(providerID: providerID, modelID: modelID)
+        }
         .photosPicker(isPresented: $showPhotoPicker, selection: $pickerItems, maxSelectionCount: 4, matching: .images)
         .onChange(of: pickerItems) { _, newItems in
             Task {
@@ -243,6 +248,12 @@ struct ChatView: View {
                         }
                     }
                 }
+                Divider()
+                Button {
+                    showModelEditor = true
+                } label: {
+                    Label("Model Info", systemImage: "info.circle")
+                }
             } label: {
                 HStack(spacing: 4) {
                     Text(currentModelDisplay()).font(.headline)
@@ -415,6 +426,8 @@ struct ChatView: View {
     private var currentModel: String {
         settingsQuery.first?.defaultModel ?? ""
     }
+
+    @State private var showModelEditor: Bool = false
 
     private func updateChatTitle(from text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -285,6 +285,24 @@
 			shellPath = /bin/sh;
 			shellScript = "if [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  if [ -f \"$SRCROOT/Env/.env\" ]; then\n    echo \"Copying .env to DevSecrets.env (Debug only)\"\n    cp \"$SRCROOT/Env/.env\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/DevSecrets.env\"\n  else\n    echo \"(No Env/.env found; skipping)\"\n  fi\nfi\n";
 		};
+		6D814817573F411CB1B86CC4 /* Bundle WebCanvas */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle WebCanvas";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nif [ -d \"$SRCROOT/ChatApp/WebCanvas/dist\" ]; then\n    SRC=\"$SRCROOT/ChatApp/WebCanvas/dist\"\n    DEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/WebCanvas/dist\"\n    mkdir -p \"$(dirname \"$DEST\")\"\n    rm -rf \"$DEST\"\n    cp -R \"$SRC\" \"$DEST\"\nfi\nif [ -d \"$SRCROOT/ChatApp/KaTeX\" ]; then\n    KATEX_SRC=\"$SRCROOT/ChatApp/KaTeX\"\n    KATEX_DEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/KaTeX\"\n    rm -rf \"$KATEX_DEST\"\n    cp -R \"$KATEX_SRC\" \"$KATEX_DEST\"\nfi\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */

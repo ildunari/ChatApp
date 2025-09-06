@@ -1,0 +1,65 @@
+{
+  "output": {
+    "filePath": "chatapp-codebase.md",
+    "style": "markdown",
+    "headerText": "ChatApp iOS Project Codebase",
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "showLineNumbers": false,
+    "copyToClipboard": false
+  },
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      "**/*.xcuserstate",
+      "**/xcuserdata/**",
+      "**/DerivedData/**",
+      "**/Build/**",
+      "**/BuildLogs/**",
+      "**/.build/**",
+      "**/.swiftpm/**",
+      "**/docs/**",
+      "**/*.dSYM/**",
+      "**/*.xcodeproj/xcuserdata/**",
+      "**/*.xcodeproj/project.xcworkspace/xcuserdata/**",
+      "**/webcanvas/node_modules/**",
+      "**/webcanvas/.next/**",
+      "**/webcanvas/dist/**",
+      "**/*.log",
+      "**/*.tmp",
+      "**/*.bak",
+      "**/Vendor/iosMath/**/*.h",
+      "**/Vendor/iosMath/**/*.m",
+      "**/*_GUIDE.md",
+      "**/*_STRATEGY.md",
+      "**/*_PLAN.md",
+      "**/ChatApp/WebCanvas/**",
+      "**/.DS_Store",
+      "**/.vscode/**",
+      "**/.idea/**",
+      "**/Env/.env",
+      "**/Env/*.env"
+    ]
+  },
+  "include": [
+    "**/*.swift",
+    "**/*.h",
+    "**/Info.plist",
+    "**/Localizable.strings",
+    "**/*.xcconfig",
+    "**/project.pbxproj",
+    "**/Package.swift",
+    "**/Package.resolved",
+    "**/*.xctestplan",
+    "**/README.md",
+    "**/CLAUDE.md",
+    "**/.gitignore",
+    "**/repomix.config.json",
+    "**/ChatApp.entitlements",
+    "**/*.xcscheme"
+  ],
+  "security": {
+    "enableSecurityCheck": true
+  }
+}

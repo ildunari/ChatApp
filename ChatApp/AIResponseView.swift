@@ -20,7 +20,7 @@ struct AIResponseView: View {
     let content: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 6) {
             ForEach(parseBlocks(from: content)) { block in
                 switch block.kind {
                 case .markdown(let text):
@@ -32,9 +32,7 @@ struct AIResponseView: View {
                 }
             }
         }
-        .padding(12) // subtle bubble look for assistant messages
-        .background(Color.secondary.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(.vertical, 2) // no bubble; let canvas show
     }
 }
 
@@ -128,7 +126,7 @@ private struct MarkdownSegment: View {
             } else {
                 // Prefer GitHub-like theme; horizontally scroll tables to avoid crushing
                 let md = Markdown(text)
-                    .markdownTheme(.chatGitHub)
+                    .markdownTheme(.chatApp)
                 if containsTable {
                     ScrollView(.horizontal, showsIndicators: true) {
                         md
@@ -152,7 +150,12 @@ private struct CodeBlockSegment: View {
         Group {
             #if canImport(Highlightr) || canImport(HighlighterSwift)
             HighlightedCodeView(code: code, language: language)
-                .background(Color.secondary.opacity(0.08))
+                .padding(6)
+                .background(Color(UIColor.secondarySystemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color(UIColor.separator).opacity(0.25), lineWidth: 1)
+                )
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             #else
             ScrollView(.horizontal, showsIndicators: true) {
@@ -160,7 +163,11 @@ private struct CodeBlockSegment: View {
                     .font(.system(.body, design: .monospaced))
                     .padding(12)
             }
-            .background(Color.secondary.opacity(0.12))
+            .background(Color(UIColor.secondarySystemBackground))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color(UIColor.separator).opacity(0.25), lineWidth: 1)
+            )
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             #endif
         }

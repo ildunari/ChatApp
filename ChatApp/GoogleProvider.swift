@@ -35,7 +35,7 @@ struct GoogleProvider: AIProviderAdvanced {
             struct InlineData: Encodable { let mimeType: String; let data: String }
         }
         struct Content: Encodable { let role: String; let parts: [Part] }
-        struct GenerationConfig: Encodable { let temperature: Double?; let topP: Double?; let topK: Int?; let maxOutputTokens: Int? }
+        struct GenerationConfig: Encodable { let temperature: Double?; let topP: Double?; let topK: Int?; let maxOutputTokens: Int?; let stopSequences: [String]? }
         struct Safety: Encodable { let category: String; let threshold: String }
         struct SystemInstruction: Encodable { let role: String = "system"; let parts: [Part] }
         struct Req: Encodable {
@@ -74,7 +74,8 @@ struct GoogleProvider: AIProviderAdvanced {
             }
         }
 
-        let gen = GenerationConfig(temperature: temperature, topP: topP, topK: topK, maxOutputTokens: maxOutputTokens)
+        let stops = ModelCapabilitiesStore.get(provider: id, model: model)?.stopSequences
+        let gen = GenerationConfig(temperature: temperature, topP: topP, topK: topK, maxOutputTokens: maxOutputTokens, stopSequences: stops)
         let safetyOff: [Safety] = ["HARM_CATEGORY_HARASSMENT",
                                     "HARM_CATEGORY_HATE_SPEECH",
                                     "HARM_CATEGORY_SEXUALLY_EXPLICIT",
@@ -105,4 +106,3 @@ struct GoogleProvider: AIProviderAdvanced {
         return text
     }
 }
-

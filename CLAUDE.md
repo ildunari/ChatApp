@@ -78,6 +78,11 @@ This is a SwiftUI-based iOS chat application with AI provider integration, built
 
 ### Primary Tool Routing
 
+#### desktop-commander (Primary File Operations)
+- **When**: All file reads/writes/edits, search operations
+- **Key Tools**: `read_file`, `write_file`, `edit_block`, `search_code`
+- **Note**: DO NOT USE SERENA - Use desktop-commander for all file operations
+
 #### XcodeBuildMCP (Primary iOS Development)
 - **When**: All build/run/test/simulator operations
 - **Key Tools**: `discover_projs`, `list_schemes`, `build_run_sim`, `test_sim`, `screenshot`, `tap/swipe`

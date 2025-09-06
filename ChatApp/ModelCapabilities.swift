@@ -18,6 +18,13 @@ struct ProviderModelInfo: Codable, Equatable {
     var preferredReasoningEffort: String?   // e.g., minimal|low|medium|high
     var preferredVerbosity: String?         // e.g., low|medium|high
     var disableSafetyFilters: Bool?         // Google safety off
+    var preferredPresencePenalty: Double?
+    var preferredFrequencyPenalty: Double?
+    var stopSequences: [String]?
+    // Anthropic-specific
+    var anthropicThinkingEnabled: Bool?
+    var anthropicThinkingBudget: Int?
+    var enablePromptCaching: Bool?
 
     // Convenience defaults
     static func fallback(id: String) -> ProviderModelInfo {
@@ -33,7 +40,13 @@ struct ProviderModelInfo: Codable, Equatable {
                           preferredMaxOutputTokens: nil,
                           preferredReasoningEffort: nil,
                           preferredVerbosity: nil,
-                          disableSafetyFilters: nil)
+                          disableSafetyFilters: nil,
+                          preferredPresencePenalty: nil,
+                          preferredFrequencyPenalty: nil,
+                          stopSequences: nil,
+                          anthropicThinkingEnabled: nil,
+                          anthropicThinkingBudget: nil,
+                          enablePromptCaching: nil)
     }
 }
 

@@ -3,15 +3,36 @@
 
 # Xcode
 build/
+Build/
 DerivedData/
 *.xcworkspace
+!default.xcworkspace
+!project.xcworkspace
 xcuserdata/
 *.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+timeline.xctimeline
+playground.xcworkspace
+*.xcbkptlist
+*.xcscheme
+!ChatApp.xcscheme
 
 # Swift Package Manager
 .build/
+.swiftpm/
 Packages/
 Package.resolved
+.package.complete
 
 # CocoaPods (not used unless added)
 Pods/
@@ -33,13 +54,43 @@ BuildLogs/
 *.ipa
 *.dSYM.zip
 *.dSYM
+*.app.dSYM
+*.app
+*.swiftmodule
+*.swiftdoc
 
 # Editor
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.nova/
 
 
 # Local env secrets (do not commit)
 Env/.env
 Env/*.env
 !Env/.env.example
+
+# Documentation build artifacts
+docs/_build/
+docs/.jekyll-cache/
+docs/.sass-cache/
+
+# WebCanvas temporary files
+webcanvas/node_modules/
+webcanvas/.next/
+webcanvas/dist/
+webcanvas/.cache/
+
+# Testing
+xcov_report/
+fastlane/test_output/
+test-results/
+*.xcresult
+
+# Temporary files
+*.tmp
+*.bak
+.scratch/
