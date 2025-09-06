@@ -5,6 +5,7 @@ struct SuggestionChipItem: Identifiable, Hashable { let id = UUID(); let title: 
 
 struct SuggestionChips: View {
     let suggestions: [SuggestionChipItem]
+    @Environment(\.tokens) private var T
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
@@ -14,13 +15,14 @@ struct SuggestionChips: View {
                             .font(.subheadline.weight(.semibold))
                         Text(s.subtitle)
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(T.textSecondary)
                     }
                     .padding(.vertical, 12)
                     .padding(.horizontal, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.secondary.opacity(0.15))
+                            .fill(T.accentSoft)
+                            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(T.borderSoft))
                     )
                 }
             }
@@ -47,7 +49,7 @@ struct InputBar: View {
     var onLive: (() -> Void)? = nil
     var onPlus: (() -> Void)? = nil
     @FocusState private var isTextFieldFocused: Bool
-    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.tokens) private var T
 
     var body: some View {
         HStack(spacing: InputMetrics.rowSpacing) {
@@ -56,7 +58,7 @@ struct InputBar: View {
                     .font(.system(size: 18, weight: .bold))
             }
             .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
-            .background(Circle().fill(Color.secondary.opacity(0.15)))
+            .background(Circle().fill(T.accentSoft))
 
             HStack(spacing: 8) {
                 // Expanding text field
@@ -76,25 +78,25 @@ struct InputBar: View {
                     Button(action: { onMic?() }) {
                         Image(systemName: "mic")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(T.textSecondary)
                             .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
-                            .background(Circle().fill(Color.secondary.opacity(0.15)))
+                            .background(Circle().fill(T.accentSoft))
                     }
                     Button(action: { onLive?() }) {
                         Image(systemName: "waveform")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(T.accent)
                             .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
-                            .background(Circle().fill(Color.secondary.opacity(0.15)))
+                            .background(Circle().fill(T.accentSoft))
                     }
                 } else {
                     // Send button only when there is text, styled like a small circle
                     Button(action: onSend) {
                         Image(systemName: "paperplane.fill")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(T.accent)
                             .frame(width: InputMetrics.sendSize, height: InputMetrics.sendSize)
-                            .background(Circle().fill(Color.secondary.opacity(0.15)))
+                            .background(Circle().fill(T.accentSoft))
                     }
                     .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
@@ -104,7 +106,11 @@ struct InputBar: View {
             .padding(.vertical, 6) // slight vertical padding so text never looks cut off
             .background(
                 RoundedRectangle(cornerRadius: InputMetrics.fieldCorner, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemBackground))
+                    .fill(T.surfaceElevated)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: InputMetrics.fieldCorner, style: .continuous)
+                            .stroke(isTextFieldFocused ? T.accent : T.borderSoft, lineWidth: isTextFieldFocused ? 1.2 : 1)
+                    )
             )
         }
         .padding(.horizontal, InputMetrics.edgePadding)

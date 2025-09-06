@@ -50,9 +50,10 @@ struct ChatView: View {
                     .disabled(isSending)
             }
             .background(
-                Rectangle()
-                    .fill(Color(.systemBackground))
-                    .ignoresSafeArea()
+                VStack(spacing: 0) {
+                    Divider().overlay(T.borderSoft).frame(height: 1)
+                    Rectangle().fill(T.surface).ignoresSafeArea()
+                }
             )
         }
         .background(T.bg.ignoresSafeArea())
@@ -187,10 +188,10 @@ struct ChatView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 6) {
                             Image(systemName: "sparkles")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(T.textSecondary)
                             Text("\(aiDisplayName) \(aiModel)")
                                 .font(.footnote)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(T.textSecondary)
                         }
                         AIResponseView(content: message.content)
                             .frame(maxWidth: .infinity, alignment: .leading)

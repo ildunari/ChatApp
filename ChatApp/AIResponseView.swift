@@ -18,6 +18,7 @@ import iosMath
 
 struct AIResponseView: View {
     let content: String
+    @Environment(\.tokens) private var T
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -32,7 +33,8 @@ struct AIResponseView: View {
                 }
             }
         }
-        .padding(.vertical, 2) // no bubble; let canvas show
+        .padding(.vertical, 2)
+        .tint(T.link)
     }
 }
 
@@ -113,6 +115,7 @@ private func parseBlocks(from text: String) -> [Block] {
 
 private struct MarkdownSegment: View {
     let text: String
+    @Environment(\.tokens) private var T
 
     // Lightweight detector for Markdown tables (header and pipes present)
     private var containsTable: Bool {
@@ -128,7 +131,7 @@ private struct MarkdownSegment: View {
             } else {
                 // Prefer GitHub-like theme; horizontally scroll tables to avoid crushing
                 let md = Markdown(text)
-                    .markdownTheme(.chatApp)
+                    .markdownTheme(.chatApp(T))
                 if containsTable {
                     ScrollView(.horizontal, showsIndicators: true) {
                         md
@@ -148,15 +151,16 @@ private struct MarkdownSegment: View {
 private struct CodeBlockSegment: View {
     let language: String?
     let code: String
+    @Environment(\.tokens) private var T
     var body: some View {
         Group {
             #if canImport(Highlightr) || canImport(HighlighterSwift)
             HighlightedCodeView(code: code, language: language)
                 .padding(6)
-                .background(Color(UIColor.secondarySystemBackground))
+                .background(T.codeBg)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Color(UIColor.separator).opacity(0.25), lineWidth: 1)
+                        .stroke(T.borderSoft, lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             #else
@@ -165,10 +169,10 @@ private struct CodeBlockSegment: View {
                     .font(.system(.body, design: .monospaced))
                     .padding(12)
             }
-            .background(Color(UIColor.secondarySystemBackground))
+            .background(T.codeBg)
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color(UIColor.separator).opacity(0.25), lineWidth: 1)
+                    .stroke(T.borderSoft, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             #endif
